@@ -1,0 +1,28 @@
+Developer Guide:
+--------GO TO YOUR PC/LAPTOP CMD:
+cd "C:" <----- path of the GATED folder
+python -m venv cloud-risk-assessment-env
+cloud-risk-assessment-env\Scripts\activate (START)
+
+--------INSTALL DEPENDECIES:
+GO TO POWERSHELL OF THE ROOT FOLDER (GATED):
+which python
+pip install -r requirements.txt
+
+--------UPDATE DEPENDENCIES:
+pip freeze > requirements.txt
+
+--------CREATE DATABASE IN MONGODB:
+.env:
+DB_URI=mongodb+srv://username:password@clustername.lphgx.mongodb.net/gated?retryWrites=true&w=majority&appName=
+
+THE BACKEND COMMAND START MUST BE APPLIED IN THE ROOT FOLDER (GATED)
+vvvvvvvvvvvvvvvvvvvvvv
+---------BACKEND START:
+uvicorn backend.app.main:app --reload
+
+THE FRONTEND COMMAND MUST BE APPLIED IN THE FRONTEND FOLDER
+vvvvvvvvvvvvvvvvvvvvvvv
+---------FRONTEND START:
+(npm install first)
+npm start
