@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from bson import ObjectId
+from typing import Optional
 
 # Pydantic model for user data
 class User(BaseModel):
@@ -8,19 +9,15 @@ class User(BaseModel):
     role: str = "user"  # Default role is "user", but can be "admin"
 
     class Config:
-        # Allow MongoDB ObjectId serialization and convert to string when serialized
         arbitrary_types_allowed = True
-        json_encoders = {
-            ObjectId: str
-        }
+        json_encoders = {ObjectId: str}
 
-# For MongoDB object ID compatibility
-class UserInDB(User):
-    id: ObjectId
+class UserInDB(BaseModel):
+    username: str
+    password: str
+    role: str
+    id: Optional[str] = None  # MongoDB id is not required during object creation
 
     class Config:
-        # Allow MongoDB ObjectId serialization
         arbitrary_types_allowed = True
-        json_encoders = {
-            ObjectId: str
-        }
+        json_encoders = {ObjectId: str}
