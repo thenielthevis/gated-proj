@@ -19,7 +19,7 @@ DB_URI=mongodb+srv://username:password@clustername.lphgx.mongodb.net/gated?retry
 THE BACKEND COMMAND START MUST BE APPLIED IN THE ROOT FOLDER (GATED)
 vvvvvvvvvvvvvvvvvvvvvv
 ---------BACKEND START:
-uvicorn backend.app.main:app --reload
+uvicorn app.main:app --reload
 
 THE FRONTEND COMMAND MUST BE APPLIED IN THE FRONTEND FOLDER
 vvvvvvvvvvvvvvvvvvvvvvv
