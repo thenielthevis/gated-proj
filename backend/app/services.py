@@ -94,11 +94,11 @@ def check_authentication(mongo_uri):
         if server_info:
             # MongoDB should be running with authentication enabled
             if 'authentication' not in server_info:
-                return "Warning: Authentication is not enabled"
+                return "Authentication Check Result: Warning: Authentication is not enabled"
             else:
-                return "Authentication is enabled"
+                return "Authentication Check Result: Authentication is enabled"
         else:
-            return "Could not connect to MongoDB to retrieve server info"
+            return "Authentication Check Result: Could not connect to MongoDB to retrieve server info"
     except Exception as e:
         return f"Error: {str(e)}"
 
@@ -109,9 +109,9 @@ def check_ip_binding(mongo_uri):
         
         # Check if the bind IP is set to 0.0.0.0 (which is a potential security risk)
         if 'bind_ip' in server_info and server_info['bind_ip'] == "0.0.0.0":
-            return "Warning: MongoDB is listening on all IPs (0.0.0.0). Consider restricting to local or trusted IPs."
+            return "IP Binding Check Result: Warning: MongoDB is listening on all IPs (0.0.0.0). Consider restricting to local or trusted IPs."
         else:
-            return "MongoDB bind IP configuration looks good."
+            return "IP Binding Check Result: MongoDB bind IP configuration looks good."
     except Exception as e:
         return f"Error: {str(e)}"
 
@@ -119,18 +119,27 @@ def check_user_roles(mongo_uri):
     try:
         client = pymongo.MongoClient(mongo_uri)
         db = client.admin
+        
+        # Attempt to retrieve user information
         users = db.command("usersInfo")
         
         # Loop through users and check their roles
         risky_users = []
         for user in users.get("users", []):
-            if "root" in user.get("roles", []):
+            if "root" in [role["role"] for role in user.get("roles", [])]:
                 risky_users.append(user["user"])
         
         if risky_users:
-            return f"Warning: The following users have 'root' roles: {', '.join(risky_users)}. They might have too many privileges."
+            return f"User Roles Check Result: Warning: The following users have 'root' roles: {', '.join(risky_users)}. They might have too many privileges."
         else:
-            return "No users with excessive privileges detected."
+            return "User Roles Check Result: No users with excessive privileges detected."
+    
+    except pymongo.errors.OperationFailure as e:
+        if "not authorized" in str(e):
+            return "User Roles Check Result: Error: The user inputted in the MONGO_URI does not have UserAdminAnyDatabase privileges."
+        else:
+            return f"User Roles Check Result: Operation error: {str(e)}"
+    
     except Exception as e:
         return f"Error: {str(e)}"
 
@@ -141,18 +150,18 @@ def check_encryption(mongo_uri):
         
         # Check if encryption is enabled (e.g., TLS)
         if 'tls' in server_info and server_info['tls'] == 'enabled':
-            return "Encryption (TLS) is enabled for MongoDB"
+            return "Encryption Check Result: Encryption (TLS) is enabled for MongoDB"
         else:
-            return "Warning: MongoDB is not using encryption (TLS). Consider enabling it."
+            return "Encryption Check Result: Warning: MongoDB is not using encryption (TLS). Consider enabling it."
     except Exception as e:
         return f"Error: {str(e)}"
 
 def check_default_port(mongo_uri):
     try:
         if '27017' in mongo_uri:
-            return "Warning: MongoDB is using the default port (27017). Consider changing it for added security."
+            return "Port Check Result: Warning: MongoDB is using the default port (27017). Consider changing it for added security."
         else:
-            return "MongoDB is not using the default port."
+            return "Port Check Result: MongoDB is not using the default port."
     except Exception as e:
         return f"Error: {str(e)}"
 
@@ -163,9 +172,9 @@ def check_logging(mongo_uri):
         
         # Check if logging is enabled for MongoDB (not logging could be a security risk)
         if 'log' in server_info and server_info['log'] == "disabled":
-            return "Warning: MongoDB logging is disabled. This may hide important security logs."
+            return "Logging Check Result: Warning: MongoDB logging is disabled. This may hide important security logs."
         else:
-            return "MongoDB logging is enabled."
+            return "Logging Check Result: MongoDB logging is enabled."
     except Exception as e:
         return f"Error: {str(e)}"
 
@@ -181,4 +190,4 @@ def scan_mongo_db_for_risks(mongo_uri: str) -> Dict[str, Any]:
     results.append(check_logging(mongo_uri))
     
     # Return a comprehensive scan result
-    return {"status": "Scanning completed", "uri": mongo_uri, "audit_results": results}
+    return {"audit_results": results}
