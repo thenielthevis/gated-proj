@@ -44,7 +44,7 @@ const _nav = [
   {
     component: CNavItem,
     name: 'SQL Script',
-    to: '/', // Change path
+    to: '/tools/SQLScript',
     icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
   },
   {
@@ -75,22 +75,6 @@ const _nav = [
     to: '/', // Change path
     icon: <CIcon icon={cilFile} customClassName="nav-icon" />,
   },
-  // {
-  //   component: CNavTitle,
-  //   name: 'Theme',
-  // },
-  // {
-  //   component: CNavItem,
-  //   name: 'Colors',
-  //   to: '/theme/colors',
-  //   icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
-  // },
-  // {
-  //   component: CNavItem,
-  //   name: 'Typography',
-  //   to: '/theme/typography',
-  //   icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,
-  // },
   {
     component: CNavTitle,
     name: 'Components',

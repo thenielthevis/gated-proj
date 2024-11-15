@@ -11,17 +11,17 @@ which python
 
 pip install -r requirements.txt
 
-
-
 --------UPDATE DEPENDENCIES:
 pip freeze > requirements.txt
 
---------CREATE DATABASE IN MONGODB:
-.env:
+--------ENV:
+MONGODB:
 DB_URI=mongodb+srv://username:password@clustername.lphgx.mongodb.net/gated?retryWrites=true&w=majority&appName=
 
-THE BACKEND COMMAND START MUST BE APPLIED IN THE ROOT FOLDER (GATED)
-vvvvvvvvvvvvvvvvvvvvvv
+SECRET_KEY:
+run the command in terminal: python app/generate_key.py
+
+THE BACKEND COMMAND MUST BE APPLIED IN THE BACKEND FOLDER
 ---------BACKEND START:
 uvicorn app.main:app --reload
 

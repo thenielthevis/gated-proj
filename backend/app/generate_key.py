@@ -1,18 +1,18 @@
 import uvicorn
 import os
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
+from pymongo import MongoClient
+from fastapi import FastAPI, HTTPException
+from uvicorn.config import Config
+from .routes import user_router, mongo_scan_router, sql_scan_router  # Import routers
+from urllib.parse import urlparse
+from cryptography.fernet import Fernet
 
+# Load environment variables
 env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
 print(f"Loading .env from: {env_path}")
 load_dotenv(env_path)
-
-from pymongo import MongoClient
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from uvicorn.config import Config
-from .routes import user_router, mongo_scan_router, sql_scan_router  # Import sql_scan_router
-from urllib.parse import urlparse
-from cryptography.fernet import Fernet
 
 # Debugging: Check if the environment variables are loaded
 print(f"SECRET_KEY: {os.getenv('SECRET_KEY')}")
@@ -21,24 +21,24 @@ print(f"DB_URI: {os.getenv('DB_URI')}")
 # FastAPI app initialization
 app = FastAPI()
 
-# CORS configuration to allow frontend requests from http://localhost:3000
+# CORS configuration to allow frontend requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Adjust this URL to your frontend's origin
+    allow_origins=["http://localhost:3000"],  # Update this to your frontend origin
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Include routers
 app.include_router(user_router, prefix="/users")
 app.include_router(mongo_scan_router, prefix="/scan")
-app.include_router(sql_scan_router, prefix="/sql")  # Include the SQL scan router with a prefix
+app.include_router(sql_scan_router, prefix="/sql")
 
 # SECRET_KEY validation
 secret_key = os.getenv("SECRET_KEY")
 if not secret_key:
-    print("SECRET_KEY not found in environment variables.")
+    print("SECRET_KEY not found in .env file.")
     secret_key = Fernet.generate_key().decode()  # Generate a new secret key if not found
     print(f"Generated SECRET_KEY: {secret_key}")
 else:
