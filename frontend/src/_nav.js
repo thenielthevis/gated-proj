@@ -38,7 +38,7 @@ const _nav = [
   {
     component: CNavItem,
     name: 'Mongo DB',
-    to: '/', // Change path
+    to: '/tools/MongoDB',
     icon: <CIcon icon={cilPlant} customClassName="nav-icon" />,
   },
   {

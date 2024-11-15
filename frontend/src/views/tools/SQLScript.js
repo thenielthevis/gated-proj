@@ -13,6 +13,7 @@ import {
   CTabPanel,
   CTabList,
   CTab,
+  CCallout,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilCheckCircle, cilLoopCircular, cilPlant, cilWarning } from '@coreui/icons'
@@ -51,8 +52,14 @@ const Buttons = () => {
 
   return (
     <>
+      <CCallout color="primary">
+        <h6 className="font-w-500">Notice!</h6>
+        This SQL Script scanning procedure may take fewer moment to finished, rather than the MongoDB. Please note to not click the button twice. 
+        Additionally, make sure that the file contains SQL Script. Enjoy using this feature while it's still free! - Gated Programming Team
+      </CCallout>
+
       <CCard className="p-0 mb-50">
-        <CCardHeader>Upload SQL File</CCardHeader>
+        <CCardHeader>Upload SQL Script</CCardHeader>
         <CCardBody>
           <input type="file" accept=".txt" onChange={handleFileChange} />
           <CButton color="primary" onClick={handleFileUpload}>
