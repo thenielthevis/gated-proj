@@ -14,7 +14,8 @@ app.include_router(user_router, prefix="/users")
 @app.on_event("startup")
 async def startup_db():
     try:
-        db_uri = os.getenv("DB_URI")  # Assuming the DB_URI is set in your environment
+        db_uri = "mongodb+srv://cocomeme2003:02Qo0WbXd4Yt8vCT@cluster0.ssdil.mongodb.net/Gated?retryWrites=true&w=majority&appName=Cluster0"
+        #os.getenv("DB_URI")  # Assuming the DB_URI is set in your environment
         client = MongoClient(db_uri)
         # Test the connection by getting a list of databases
         client.list_database_names()  # This will throw an exception if the connection fails

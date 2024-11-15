@@ -1,0 +1,8 @@
+/* Add this in your CSS file */
+.iceland-font {
+    font-family: 'Iceland', sans-serif;
+    font-size: 24px; /* Adjust size as needed */
+    color: white;    /* Adjust color as needed */
+    margin-left: 8px; /* Spacing to the left of the image */
+  }
+  
