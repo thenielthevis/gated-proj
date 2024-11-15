@@ -8,8 +8,9 @@ load_dotenv(env_path)
 
 from pymongo import MongoClient
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from uvicorn.config import Config
-from .routes import user_router, mongo_scan_router
+from .routes import user_router, mongo_scan_router, sql_scan_router  # Import sql_scan_router
 from urllib.parse import urlparse
 from cryptography.fernet import Fernet
 
@@ -19,13 +20,25 @@ print(f"DB_URI: {os.getenv('DB_URI')}")
 
 # FastAPI app initialization
 app = FastAPI()
+
+# CORS configuration to allow frontend requests from http://localhost:3000
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Adjust this URL to your frontend's origin
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
+)
+
+# Include routers
 app.include_router(user_router, prefix="/users")
 app.include_router(mongo_scan_router, prefix="/scan")
+app.include_router(sql_scan_router, prefix="/sql")  # Include the SQL scan router with a prefix
 
 # SECRET_KEY validation
 secret_key = os.getenv("SECRET_KEY")
 if not secret_key:
-    print("SECRET_KEY not found in .env file.")
+    print("SECRET_KEY not found in environment variables.")
     secret_key = Fernet.generate_key().decode()  # Generate a new secret key if not found
     print(f"Generated SECRET_KEY: {secret_key}")
 else:

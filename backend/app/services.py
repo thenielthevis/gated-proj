@@ -1,4 +1,5 @@
 import os
+import re  
 import pymongo
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
@@ -182,3 +183,81 @@ def scan_mongo_db_for_risks(mongo_uri: str) -> Dict[str, Any]:
     
     # Return a comprehensive scan result
     return {"status": "Scanning completed", "uri": mongo_uri, "audit_results": results}
+
+# Function to validate SQL script for basic errors
+
+def validate_sql_script(sql_content: str) -> Dict[str, List[str]]:
+    analysis = {
+        "errors": [],
+        "warnings": [],
+        "good_practices": []
+    }
+
+    if not sql_content:
+        analysis["errors"].append("SQL script is empty.")
+        return analysis
+
+    # Split SQL content by semicolons to handle each statement individually
+    statements = [stmt.strip() for stmt in sql_content.split(';') if stmt.strip()]
+
+    for statement in statements:
+        # Check for SELECT with specific columns (good practice)
+        if re.search(r"\bSELECT\b\s+[^*]\w+", statement, re.IGNORECASE):
+            analysis["good_practices"].append(f"Specified columns in SELECT statement: {statement}")
+
+        # Check for missing columns in SELECT statement
+        if re.search(r"\bSELECT\s+FROM\b", statement, re.IGNORECASE):
+            analysis["errors"].append(f"Missing columns in SELECT statement: {statement}. Tip: Specify columns to select (e.g., SELECT column_name FROM table).")
+
+        # Check for missing column names in INSERT statement
+        if re.search(r"\bINSERT\s+INTO\s+\w+\s+VALUES\s*\(", statement, re.IGNORECASE):
+            analysis["warnings"].append(f"INSERT without column names in statement: {statement}. Tip: Specify column names to ensure data is inserted in the correct order.")
+
+        # Check for missing WHERE clause in DELETE or UPDATE statements
+        if re.search(r"\b(DELETE|UPDATE)\s+\w+", statement, re.IGNORECASE) and not re.search(r"\bWHERE\b", statement, re.IGNORECASE):
+            analysis["errors"].append(f"Potentially dangerous DELETE or UPDATE without WHERE clause: {statement}. Tip: Add a WHERE clause to limit the scope of the update/delete.")
+
+        # Check for empty string conditions in WHERE clause
+        if re.search(r"WHERE\s+\w+\s*=\s*''", statement, re.IGNORECASE):
+            analysis["warnings"].append(f"Empty string condition in WHERE clause: {statement}. Tip: Ensure that empty string is a valid value for comparison.")
+
+        # Check for missing data type in CREATE TABLE statement
+        if re.search(r"\bCREATE\s+TABLE\b", statement, re.IGNORECASE):
+            if re.search(r"\w+\s*,?\s*\)", statement) and not re.search(r"\w+\s+\w+\b", statement):
+                analysis["errors"].append(f"Missing data type in CREATE TABLE statement: {statement}. Tip: Specify a data type for each column (e.g., VARCHAR(50), INT).")
+
+        # Check for missing table name in DROP TABLE or ALTER TABLE statement
+        if re.search(r"\b(DROP|ALTER)\s+TABLE\b\s*$", statement, re.IGNORECASE):
+            analysis["errors"].append(f"Missing table name in {statement.split()[0]} TABLE statement: {statement}. Tip: Specify the table name.")
+
+        # Check for missing column value in INSERT statement with specified columns
+        if re.search(r"\bINSERT\s+INTO\s+\w+\s+\(.+\)\s+VALUES\s*\(.+\)", statement, re.IGNORECASE):
+            columns = re.findall(r"\((.*?)\)", statement)
+            if len(columns) == 2 and len(columns[0].split(',')) != len(columns[1].split(',')):
+                analysis["errors"].append(f"Column count does not match value count in INSERT statement: {statement}. Tip: Ensure that each column has a corresponding value.")
+
+        # Check for missing new table name in ALTER TABLE RENAME TO statement
+        if re.search(r"\bALTER\s+TABLE\s+\w+\s+RENAME\s+TO\b\s*$", statement, re.IGNORECASE):
+            analysis["errors"].append(f"Missing new table name in ALTER TABLE RENAME TO statement: {statement}. Tip: Specify the new table name.")
+
+        # Check for missing semicolon at the end of the statement
+        if not statement.endswith(";"):
+            analysis["warnings"].append(f"Missing semicolon at the end of the statement: {statement}. Tip: Add a semicolon at the end of each SQL statement.")
+
+        # Check for valid SQL command
+        if not re.search(r"^(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE)\b", statement, re.IGNORECASE):
+            analysis["errors"].append(f"No valid SQL command found in statement: {statement}. Tip: Ensure SQL keywords are correct.")
+
+        # Check for unbalanced parentheses
+        if statement.count('(') != statement.count(')'):
+            analysis["errors"].append(f"Mismatched parentheses in statement: {statement}. Tip: Ensure all opening parentheses have a corresponding closing parenthesis.")
+
+        # Check for SELECT without *
+        if re.search(r"\bSELECT\s+[^*]+\b", statement, re.IGNORECASE):
+            analysis["good_practices"].append(f"Avoiding SELECT * in statement: {statement}")
+
+        # Check for valid JOIN statement (good practice)
+        if re.search(r"\bJOIN\b", statement, re.IGNORECASE):
+            analysis["good_practices"].append(f"Using JOIN to combine tables: {statement}")
+
+    return analysis
