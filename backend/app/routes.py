@@ -1,16 +1,12 @@
 import os
-import jsonify
-import mongoaudit
-from flask import request
-from fastapi import APIRouter, HTTPException, Request
-from fastapi import FastAPI
+import re
+from typing import List
+from fastapi import UploadFile, File, APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from passlib.context import CryptContext
 from cryptography.fernet import Fernet
-from dotenv import load_dotenv
 from .models import User, UserInDB, MongoDBRequest
-from .services import create_user, get_user_by_username, scan_mongo_db_for_risks 
-import subprocess
+from .services import create_user, get_user_by_username, scan_mongo_db_for_risks, validate_sql_script
 from fastapi.responses import JSONResponse
 
 # Load environment variables
@@ -30,11 +26,12 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # Define Routers
 user_router = APIRouter()
 mongo_scan_router = APIRouter()
+sql_scan_router = APIRouter()
 
 @user_router.post("/register")
 async def register(user: User):
     hashed_password = pwd_context.hash(user.password)
-    user_in_db = UserInDB(username=user.username, password=hashed_password, role=user.role)
+    user_in_db = UserInDB(username=user.username, password=user.password, role=user.role)
 
     if get_user_by_username(user.username):
         raise HTTPException(status_code=400, detail="Username already registered.")
@@ -82,8 +79,11 @@ async def scan_mongo_db(request: MongoDBRequest):
             raise ValueError("MongoDB URI is required")
 
         # Run the MongoDB risk scan
-        audit_results = scan_mongo_db_for_risks(mongo_uri)  # Use the custom function
-        
+        audit_results = scan_mongo_db_for_risks(mongo_uri)  # Custom function for scan
+
+        # Log the audit results
+        print("Audit results:", audit_results)
+
         # Return the scan results as a response
         return {"status": "Scanning completed", "uri": mongo_uri, "audit_results": audit_results}
     
@@ -91,3 +91,17 @@ async def scan_mongo_db(request: MongoDBRequest):
         # Log the error and send it in the response
         print(f"Error during scan: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error during scanning: {str(e)}")
+
+# Endpoint to receive and validate the SQL file
+@sql_scan_router.post("/upload-sql-file")
+async def upload_sql_file(file: UploadFile = File(...)):
+    if file.content_type != "text/plain":
+        raise HTTPException(status_code=400, detail="Only text files are allowed.")
+
+    content = await file.read()
+    sql_content = content.decode("utf-8")
+    
+    # Validate each SQL statement in the content
+    analysis = validate_sql_script(sql_content)
+
+    return {"analysis": analysis}
