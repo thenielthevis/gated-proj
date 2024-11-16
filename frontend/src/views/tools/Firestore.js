@@ -18,6 +18,8 @@ import {
 import CIcon from '@coreui/icons-react';
 import { cilCheckCircle, cilWarning, cilLoopCircular } from '@coreui/icons';
 import Swal from 'sweetalert2';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const Buttons = () => {
   const [firestoreKey, setFirestoreKey] = useState(null);
@@ -130,6 +132,70 @@ const Buttons = () => {
     }
   };
 
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+  
+    // Title
+    doc.setFontSize(16);
+    doc.text('Firestore Analysis Report', pageWidth / 2, 20, { align: 'center' });
+  
+    // Function to create table data format for each section
+    const createTableData = (title, items) => {
+      if (items.length === 0) {
+        return [[`${title} - No issues detected.`]];
+      }
+      return items.map((item, index) => [
+        `${title} #${index + 1}`,
+        item.check || 'N/A',
+        item.result || 'N/A',
+      ]);
+    };
+  
+    // Data for Danger Table
+    const dangersTableData = createTableData('Danger', auditResults.errors);
+    // Data for Warnings Table
+    const warningsTableData = createTableData('Warning', auditResults.warnings);
+    // Data for Good Practices Table
+    const goodPracticesTableData = createTableData('Good Practice', auditResults.good_practices);
+  
+    // Add tables to PDF
+    const startY = 30; // Initial Y position for the first table
+  
+    // Add Danger table
+    doc.autoTable({
+      startY,
+      head: [['Type', 'Check', 'Description']],
+      body: dangersTableData,
+      theme: 'grid',
+      headStyles: { fillColor: [220, 53, 69], textColor: 255 }, // Red for Danger
+      columnStyles: { 1: { cellWidth: 'auto' }, 2: { cellWidth: 'auto' } }, // Auto wrap
+    });
+  
+    // Add Warning table
+    doc.autoTable({
+      startY: doc.previousAutoTable.finalY + 10,
+      head: [['Type', 'Check', 'Description']],
+      body: warningsTableData,
+      theme: 'grid',
+      headStyles: { fillColor: [255, 193, 7], textColor: 0 }, // Yellow for Warning
+      columnStyles: { 1: { cellWidth: 'auto' }, 2: { cellWidth: 'auto' } },
+    });
+  
+    // Add Good Practices table
+    doc.autoTable({
+      startY: doc.previousAutoTable.finalY + 10,
+      head: [['Type', 'Check', 'Description']],
+      body: goodPracticesTableData,
+      theme: 'grid',
+      headStyles: { fillColor: [40, 167, 69], textColor: 255 }, // Green for Good Practices
+      columnStyles: { 1: { cellWidth: 'auto' }, 2: { cellWidth: 'auto' } },
+    });
+  
+    // Save the PDF
+    doc.save('Firestore_Analysis_Report.pdf');
+  };  
+
   return (
     <>
       <CCallout color="primary">
@@ -150,6 +216,9 @@ const Buttons = () => {
           <CButton color="primary" onClick={handleKeyUpload}>
             Scan
           </CButton>
+          <CButton color="secondary" onClick={exportToPDF} style={{ marginLeft: '10px' }}>
+          Export to PDF
+        </CButton>
         </CCardBody>
       </CCard>
 
@@ -238,6 +307,7 @@ const Buttons = () => {
               </CTabPanel>
             </CTabContent>
           </CTabs>
+          
         )}
 
         {/* Educational Links Section */}
