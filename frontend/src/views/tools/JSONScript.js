@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 import {
   CButton,
   CCard,
@@ -14,21 +14,28 @@ import {
   CTabList,
   CTab,
   CCallout,
-} from '@coreui/react'
+} from '@coreui/react';
 import Swal from 'sweetalert2';
-import CIcon from '@coreui/icons-react'
-import { cilCheckCircle, cilLoopCircular, cilWarning } from '@coreui/icons'
-import { jsPDF } from 'jspdf'
-import 'jspdf-autotable'
+import CIcon from '@coreui/icons-react';
+import { cilCheckCircle, cilLoopCircular, cilWarning } from '@coreui/icons';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 
 const JSONScript = () => {
-  const [file, setFile] = useState(null)
-  const [activeTab, setActiveTab] = useState(0)
-  const [analysisResults, setAnalysisResults] = useState(null)
+  const [file, setFile] = useState(null);
+  const [activeTab, setActiveTab] = useState(0);
+  const [analysisResults, setAnalysisResults] = useState(null);
 
   const handleFileChange = (event) => {
-    setFile(event.target.files[0])
-  }
+    const selectedFile = event.target.files[0];
+    if (selectedFile && selectedFile.type === "application/json") {
+      setFile(selectedFile);
+    } else {
+      alert("Please select a JSON file.");
+      setFile(null);
+      event.target.value = ""; // Clear the file input
+    }
+  };
 
   const handleFileUpload = async () => {
     if (!file) {
@@ -54,10 +61,10 @@ const JSONScript = () => {
         },
       });
   
-      const response = await fetch('http://localhost:8000/json/upload-json-file', {
-        method: 'POST',
+      const response = await fetch("http://localhost:8000/json/upload-json-file", {
+        method: "POST",
         headers: {
-          Accept: 'application/json',
+          Accept: "application/json",
         },
         body: formData,
       });
@@ -90,80 +97,80 @@ const JSONScript = () => {
         text: 'An error occurred while uploading the file. Please try again.',
       });
     }
-  }
+  };
 
   const exportToPDF = () => {
-    const doc = new jsPDF()
-    const pageWidth = doc.internal.pageSize.getWidth()
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
 
     // Title
-    doc.setFontSize(16)
-    doc.text('JSON Script Analysis Report', pageWidth / 2, 20, { align: 'center' })
+    doc.setFontSize(16);
+    doc.text("JSON Script Analysis Report", pageWidth / 2, 20, { align: "center" });
 
     // Function to create table data format for each section
     const createTableData = (title, items) => {
       if (items.length === 0) {
-        return [[`${title} - No issues detected.`]]
+        return [[`${title} - No issues detected.`]];
       }
-      return items.map((item, index) => [`${title} #${index + 1}`, item])
-    }
+      return items.map((item, index) => [`${title} #${index + 1}`, item]);
+    };
 
     // Data for Dangers Table
-    const dangersTableData = createTableData('Danger', analysisResults.errors)
+    const dangersTableData = createTableData("Danger", analysisResults.errors);
     // Data for Warnings Table
-    const warningsTableData = createTableData('Warning', analysisResults.warnings)
+    const warningsTableData = createTableData("Warning", analysisResults.warnings);
     // Data for Good Practices Table
-    const goodPracticesTableData = createTableData('Good Practice', analysisResults.good_practices)
+    const goodPracticesTableData = createTableData("Good Practice", analysisResults.good_practices);
 
     // Add tables to PDF
-    const startY = 30 // Initial Y position for the first table
+    const startY = 30; // Initial Y position for the first table
 
     // Add Danger table
     doc.autoTable({
       startY,
-      head: [['Type', 'Description']],
+      head: [["Type", "Description"]],
       body: dangersTableData,
-      theme: 'grid',
+      theme: "grid",
       headStyles: { fillColor: [220, 53, 69], textColor: 255 }, // Red for Danger
-      columnStyles: { 1: { cellWidth: 'auto' } }, // Auto wrap
-    })
+      columnStyles: { 1: { cellWidth: "auto" } }, // Auto wrap
+    });
 
     // Add Warning table
     doc.autoTable({
       startY: doc.previousAutoTable.finalY + 10,
-      head: [['Type', 'Description']],
+      head: [["Type", "Description"]],
       body: warningsTableData,
-      theme: 'grid',
+      theme: "grid",
       headStyles: { fillColor: [255, 193, 7], textColor: 0 }, // Yellow for Warning
-      columnStyles: { 1: { cellWidth: 'auto' } },
-    })
+      columnStyles: { 1: { cellWidth: "auto" } },
+    });
 
     // Add Good Practices table
     doc.autoTable({
       startY: doc.previousAutoTable.finalY + 10,
-      head: [['Type', 'Description']],
+      head: [["Type", "Description"]],
       body: goodPracticesTableData,
-      theme: 'grid',
+      theme: "grid",
       headStyles: { fillColor: [40, 167, 69], textColor: 255 }, // Green for Good Practices
-      columnStyles: { 1: { cellWidth: 'auto' } },
-    })
+      columnStyles: { 1: { cellWidth: "auto" } },
+    });
 
     // Save the PDF
-    doc.save('JSON_Script_Analysis_Report.pdf');
-  }
+    doc.save("JSON_Script_Analysis_Report.pdf");
+  };
 
   return (
     <>
       <CCallout color="primary">
         <h6 className="font-w-500">Notice!</h6>
-        This JSON Script scanning procedure may take a few moments to finish. 
+        This JSON Script scanning procedure may take a few moments to finish.
         Additionally, make sure that the file contains a valid JSON Script.
       </CCallout>
 
       <CCard className="p-0 mb-50">
         <CCardHeader>Upload JSON Script</CCardHeader>
         <CCardBody>
-          <input type="file" accept=".txt" onChange={handleFileChange} />
+          <input type="file" accept=".json" onChange={handleFileChange} />
           <CButton color="primary" onClick={handleFileUpload}>
             Upload and Scan
           </CButton>
@@ -251,7 +258,7 @@ const JSONScript = () => {
         )}
       </CCard>
     </>
-  )
-}
+  );
+};
 
-export default JSONScript
+export default JSONScript;
