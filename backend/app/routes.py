@@ -114,12 +114,12 @@ async def upload_sql_file(file: UploadFile = File(...), user_id: str = "example_
 
 @json_scan_router.post("/upload-json-file")
 async def upload_json_file(file: UploadFile = File(...), user_id: str = "example_user_id"):
-    if file.content_type not in ["application/json", "text/plain"]:  # Allow JSON and text files
-        raise HTTPException(status_code=400, detail="Only JSON or text files are allowed.")
+    if file.content_type != "application/json":
+        raise HTTPException(status_code=400, detail="Only JSON files are allowed.")
 
     content = await file.read()
     try:
-        json_content = content.decode("utf-8")  # Decode content for JSON parsing
+        json_content = content.decode("utf-8")
         analysis = validate_json_script(json_content)  # Validate JSON content
     except UnicodeDecodeError:
         raise HTTPException(status_code=400, detail="File is not valid JSON format")
