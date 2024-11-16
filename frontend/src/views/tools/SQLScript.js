@@ -21,7 +21,7 @@ import { jsPDF } from 'jspdf' // Import jsPDF for PDF export
 import 'jspdf-autotable'
 import Swal from 'sweetalert2';
 
-const Buttons = () => {
+const SQLScript = () => {
   const [file, setFile] = useState(null)
   const [activeTab, setActiveTab] = useState(0)
   const [analysisResults, setAnalysisResults] = useState(null)
@@ -137,8 +137,7 @@ const Buttons = () => {
     <>
       <CCallout color="primary">
         <h6 className="font-w-500">Notice!</h6>
-        This SQL Script scanning procedure may take fewer moment to finished, rather than the MongoDB. Please note to not click the button twice. 
-        Additionally, make sure that the file contains SQL Script. Enjoy using this feature while it's still free! - Gated Programming Team
+        This SQL Script scanning procedure may take fewer moments to finish than the MongoDB. Please ensure the file contains valid SQL commands, as JSON format is not allowed. Enjoy using this feature while it's still free! - Gated Programming Team
       </CCallout>
 
       <CCard className="p-0 mb-50">
@@ -235,4 +234,4 @@ const Buttons = () => {
   )
 }
 
-export default Buttons
+export default SQLScript

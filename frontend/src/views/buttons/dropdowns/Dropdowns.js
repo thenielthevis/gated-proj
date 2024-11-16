@@ -1,153 +1,181 @@
-import React, { useState } from 'react';
-import { CButton, CCard, CCardBody, CCardHeader, CCol, CRow } from '@coreui/react';
+import React from 'react';
+import { CCard, CCardBody, CCardHeader, CCol, CRow } from '@coreui/react';
 
-const Buttons = () => {
-  const [mongoUri, setMongoUri] = useState('');
-  const [auditResults, setAuditResults] = useState({
-    errors: [],
-    warnings: [],
-    good_practices: []
-  });
-
-  // Handle URI input
-  const handleUriChange = (event) => {
-    setMongoUri(event.target.value);
-  };
-
-  const handleUriUpload = async () => {
-    if (!mongoUri) {
-      alert('Please enter a MongoDB URI first.');
-      return;
-    }
-
-    // Reset audit results before starting new scan
-    setAuditResults({
-      errors: [],
-      warnings: [],
-      good_practices: []
-    });
-
-    try {
-      const response = await fetch('http://localhost:8000/scan/mongodb', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ mongodb_uri: mongoUri }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error response from server:', errorText);
-        alert(`Failed to upload URI: ${response.statusText}`);
-        return;
-      }
-
-      const data = await response.json();
-      console.log("Response data:", data);
-
-      // Check if audit_results is an object and it contains audit_results as an array
-      if (data.audit_results && data.audit_results.audit_results && Array.isArray(data.audit_results.audit_results)) {
-        const auditResultsArray = data.audit_results.audit_results;
-
-        // Separate the results based on category
-        const categorizedResults = {
-          errors: [],
-          warnings: [],
-          good_practices: [],
-        };
-
-        auditResultsArray.forEach(result => {
-          if (result.category === 'Danger') {
-            categorizedResults.errors.push(result);
-          } else if (result.category === 'Warning') {
-            categorizedResults.warnings.push(result);
-          } else if (result.category === 'Good') {
-            categorizedResults.good_practices.push(result);
-          }
-        });
-
-        setAuditResults(categorizedResults);
-      } else {
-        console.warn('Unexpected response structure:', data);
-        alert('Unexpected response from server. Check console logs for details.');
-      }
-    } catch (error) {
-      console.error('Error uploading URI:', error);
-      alert('An error occurred while uploading the URI. Please check the console for more details.');
-    }
-  };
-
+const Dropdown = () => {
   return (
-    <CRow>
-      <CCol xs="12" lg="6">
-        <CCard>
-          <CCardHeader>Enter MongoDB URL</CCardHeader>
+    <CRow className="mx-auto" style={{ maxWidth: '800px' }}>
+      {/* Page Header */}
+      <CCol xs="12">
+        <CCard className="mb-4">
+          <CCardHeader style={{ backgroundColor: '#2d2d2d', color: '#f8f8f2' }}>
+            <h2>Common JSON Mistakes and How to Avoid Them</h2>
+          </CCardHeader>
           <CCardBody>
-            <input
-              type="text"
-              onChange={handleUriChange}
-              value={mongoUri}
-              placeholder='mongodb+srv://<username>:<password>@<clustername>.lphgx.mongodb.net/<>'
-            />
-            <CButton color="primary" onClick={handleUriUpload}>
-              Scan
-            </CButton>
+            <p style={{ color: '#dcdcdc' }}>
+              JSON (JavaScript Object Notation) is a widely-used, open-standard format for representing structured data. It is human-readable, compact, and ideal for data interchange in web applications. However, it's common to make mistakes when working with JSON, impacting data consistency, readability, and performance. Here are some typical errors and ways to avoid them.
+            </p>
           </CCardBody>
         </CCard>
       </CCol>
 
-      <CCol xs="12" lg="6">
-        {auditResults && (
-          <div>
-            <h5>Scan Results:</h5>
+      {/* Mistake Sections */}
+      {/* 1. Inconsistent Key Naming Conventions */}
+      <CCol xs="12">
+        <CCard className="mb-4" style={{ backgroundColor: '#2d2d2d', color: '#f8f8f2' }}>
+          <CCardHeader>
+            <h3>1. Inconsistent Key Naming Conventions</h3>
+          </CCardHeader>
+          <CCardBody>
+            <p>
+              JSON keys should follow a consistent naming convention such as <code>camelCase</code>, <code>snake_case</code>, or <code>kebab-case</code>. Mixing naming conventions can lead to confusion and negatively impact readability and maintainability.
+            </p>
+            <p>Example of consistent naming convention:</p>
+            <pre style={{ backgroundColor: '#333', padding: '1rem', color: '#f8f8f2' }}>
+              <code>
+                {`{
+  "userName": "johndoe",
+  "userEmail": "john@example.com",
+  "userAge": 30
+}`}
+              </code>
+            </pre>
+          </CCardBody>
+        </CCard>
+      </CCol>
 
-            {/* Display Errors (Dangers) */}
-            {auditResults.errors.length > 0 && (
-              <>
-                <h6>Danger:</h6>
-                <ul>
-                  {auditResults.errors.map((error, index) => (
-                    <li key={index}>
-                      <strong>{error.check}:</strong> {error.result}
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
+      {/* 2. Trailing Commas */}
+      <CCol xs="12">
+        <CCard className="mb-4" style={{ backgroundColor: '#2d2d2d', color: '#f8f8f2' }}>
+          <CCardHeader>
+            <h3>2. Trailing Commas</h3>
+          </CCardHeader>
+          <CCardBody>
+            <p>
+              JSON does not support trailing commas at the end of objects or arrays. Including a trailing comma will cause syntax errors. Ensure no extra commas are present in JSON data.
+            </p>
+            <p>Example of incorrect and correct syntax:</p>
+            <pre style={{ backgroundColor: '#333', padding: '1rem', color: '#f8f8f2' }}>
+              <code>
+                {`// Incorrect
+{
+  "name": "John",
+  "age": 30,
+}
 
-            {/* Display Warnings */}
-            {auditResults.warnings.length > 0 && (
-              <>
-                <h6>Warnings:</h6>
-                <ul>
-                  {auditResults.warnings.map((warning, index) => (
-                    <li key={index}>
-                      <strong>{warning.check}:</strong> {warning.result}
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
+// Correct
+{
+  "name": "John",
+  "age": 30
+}`}
+              </code>
+            </pre>
+          </CCardBody>
+        </CCard>
+      </CCol>
 
-            {/* Display Good Practices */}
-            {auditResults.good_practices.length > 0 && (
-              <>
-                <h6>Good:</h6>
-                <ul>
-                  {auditResults.good_practices.map((practice, index) => (
-                    <li key={index}>
-                      <strong>{practice.check}:</strong> {practice.result}
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-          </div>
-        )}
+      {/* 3. Misuse of Data Types */}
+      <CCol xs="12">
+        <CCard className="mb-4" style={{ backgroundColor: '#2d2d2d', color: '#f8f8f2' }}>
+          <CCardHeader>
+            <h3>3. Misuse of Data Types</h3>
+          </CCardHeader>
+          <CCardBody>
+            <p>
+              JSON supports specific data types: strings, numbers, objects, arrays, booleans, and null. Using incorrect types, like wrapping numbers in quotes, can lead to errors or unexpected behavior.
+            </p>
+            <p>Example of correct data type usage:</p>
+            <pre style={{ backgroundColor: '#333', padding: '1rem', color: '#f8f8f2' }}>
+              <code>
+                {`// Incorrect
+{
+  "age": "30" // age is a number, not a string
+}
+
+// Correct
+{
+  "age": 30
+}`}
+              </code>
+            </pre>
+          </CCardBody>
+        </CCard>
+      </CCol>
+
+      {/* 4. Missing or Extra Quotation Marks */}
+      <CCol xs="12">
+        <CCard className="mb-4" style={{ backgroundColor: '#2d2d2d', color: '#f8f8f2' }}>
+          <CCardHeader>
+            <h3>4. Missing or Extra Quotation Marks</h3>
+          </CCardHeader>
+          <CCardBody>
+            <p>
+              In JSON, keys must be strings enclosed in double quotes. Avoid missing or extra quotes, as they can lead to syntax errors or misinterpretation of data.
+            </p>
+            <p>Example of correct key formatting:</p>
+            <pre style={{ backgroundColor: '#333', padding: '1rem', color: '#f8f8f2' }}>
+              <code>
+                {`// Incorrect
+{
+  name: "John", // missing quotes around "name"
+  "age": 30
+}
+
+// Correct
+{
+  "name": "John",
+  "age": 30
+}`}
+              </code>
+            </pre>
+          </CCardBody>
+        </CCard>
+      </CCol>
+
+      {/* 5. Duplicated Keys */}
+      <CCol xs="12">
+        <CCard className="mb-4" style={{ backgroundColor: '#2d2d2d', color: '#f8f8f2' }}>
+          <CCardHeader>
+            <h3>5. Duplicated Keys</h3>
+          </CCardHeader>
+          <CCardBody>
+            <p>
+              JSON does not support duplicate keys within the same object. Including duplicate keys can cause unexpected behavior as only the last occurrence is retained.
+            </p>
+            <p>Example showing the effect of duplicated keys:</p>
+            <pre style={{ backgroundColor: '#333', padding: '1rem', color: '#f8f8f2' }}>
+              <code>
+                {`// Incorrect
+{
+  "name": "John",
+  "name": "Jane" // duplicate key, only "Jane" will be retained
+}
+
+// Correct
+{
+  "firstName": "John",
+  "lastName": "Doe"
+}`}
+              </code>
+            </pre>
+          </CCardBody>
+        </CCard>
+      </CCol>
+
+      {/* Summary Section */}
+      <CCol xs="12">
+        <CCard className="mb-4" style={{ backgroundColor: '#2d2d2d', color: '#f8f8f2' }}>
+          <CCardHeader>
+            <h3>Summary</h3>
+          </CCardHeader>
+          <CCardBody>
+            <p>
+              Avoiding common JSON mistakes is crucial for maintaining data consistency and preventing errors. By following best practices such as consistent naming, correct data types, and proper formatting, you can ensure that your JSON data is clean, reliable, and easy to work with across different systems.
+            </p>
+          </CCardBody>
+        </CCard>
       </CCol>
     </CRow>
   );
 };
 
-export default Buttons;
+export default Dropdown;
