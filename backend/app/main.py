@@ -10,9 +10,13 @@ from pymongo import MongoClient
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from uvicorn.config import Config
-from .routes import user_router, mongo_scan_router, sql_scan_router  # Import sql_scan_router
+from .routes import user_router, mongo_scan_router, sql_scan_router, json_scan_router  # Added json_scan_router
 from urllib.parse import urlparse
 from cryptography.fernet import Fernet
+from .models import User, UserInDB, FileUploadRecord  # Importing models relatively
+from .services import get_db, store_file_upload_record  # Importing services relatively
+from .routes import user_router, mongo_scan_router, sql_scan_router, json_scan_router
+
 
 # Debugging: Check if the environment variables are loaded
 print(f"SECRET_KEY: {os.getenv('SECRET_KEY')}")
@@ -34,6 +38,8 @@ app.add_middleware(
 app.include_router(user_router, prefix="/users")
 app.include_router(mongo_scan_router, prefix="/scan")
 app.include_router(sql_scan_router, prefix="/sql")  # Include the SQL scan router with a prefix
+app.include_router(json_scan_router, prefix="/json")  # Include JSON scan router
+
 
 # SECRET_KEY validation
 secret_key = os.getenv("SECRET_KEY")

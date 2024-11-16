@@ -48,3 +48,13 @@ class ScanResult(BaseModel):
 
 class MongoDBRequest(BaseModel):
     mongodb_uri: str
+
+
+class FileUploadRecord(BaseModel):
+    # user_id: str  # Uncomment when needed
+    service: str  # Either "SQL" or "JSON"
+    created_at: datetime = datetime.now()
+
+    class Config:
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
