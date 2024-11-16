@@ -8,8 +8,9 @@ const Typography = React.lazy(() => import('./views/theme/typography/Typography'
 // Tools
 const MongoDB = React.lazy(() => import('./views/tools/MongoDB'))
 const SQLScript = React.lazy(() => import('./views/tools/SQLScript'))
-// const JSONScript = React.lazy(() => import('./views/tools/JSONScript'))
-const Firebase = React.lazy(() => import('./views/tools/Firestore'))
+const JSONScript = React.lazy(() => import('./views/tools/JSONScript'))
+const Firestore = React.lazy(() => import('./views/tools/Firestore'))
+const Hosting = React.lazy(() => import('./views/tools/Hosting'))
 
 // Base
 const Accordion = React.lazy(() => import('./views/base/accordion/Accordion'))
@@ -107,8 +108,9 @@ const routes = [
   // Tools
   { path: '/tools/MongoDB', name: 'Mongo DB', element: MongoDB },
   { path: '/tools/SQLScript', name: 'SQL Script', element: SQLScript },
-  // { path: '/tools/JSONScript', name: 'JSON Script', element: JSONScript },
-  { path: '/tools/Firestore', name: 'Firebase', element: Firebase },
+  { path: '/tools/JSONScript', name: 'JSON Script', element: JSONScript },
+  { path: '/tools/Firestore', name: 'Firestore', element: Firestore },
+  { path: '/tools/Hosting', name: 'Hosting', element: Hosting },
 ]
 
 export default routes

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { CButton, CCard, CCardBody, CCardHeader, CCol, CRow } from '@coreui/react'
+import Swal from 'sweetalert2';
 
 const ButtonGroups = () => {
   const [file, setFile] = useState(null)
@@ -11,34 +12,66 @@ const ButtonGroups = () => {
 
   const handleFileUpload = async () => {
     if (!file) {
-      alert('Please select a file first.')
-      return
+      Swal.fire({
+        icon: 'error',
+        title: 'No File Selected',
+        text: 'Please select a file first.',
+      });
+      return;
     }
-
-    const formData = new FormData()
-    formData.append('file', file)
-
+  
+    const formData = new FormData();
+    formData.append('file', file);
+  
     try {
+      // Show loading spinner while the file is being uploaded
+      Swal.fire({
+        title: 'Uploading File...',
+        text: 'Please wait while your file is being uploaded.',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+  
       const response = await fetch('http://localhost:8000/json/upload-json-file', {
         method: 'POST',
         headers: {
           Accept: 'application/json',
         },
         body: formData,
-      })
-
+      });
+  
       if (!response.ok) {
-        console.error('Failed to upload file, status:', response.status)
-        alert('File upload failed')
-        return
+        console.error('Failed to upload file, status:', response.status);
+        Swal.fire({
+          icon: 'error',
+          title: 'Upload Failed',
+          text: `File upload failed with status: ${response.status}`,
+        });
+        return;
       }
-
-      const data = await response.json()
-      setAnalysisResults(data.analysis)
+  
+      const data = await response.json();
+      setAnalysisResults(data.analysis);
+  
+      // Close the spinner and show success message
+      Swal.fire({
+        icon: 'success',
+        title: 'Upload Successful',
+        text: 'Your file has been uploaded and processed successfully!',
+        timer: 2000,
+      });
     } catch (error) {
-      console.error('Error uploading file:', error)
+      console.error('Error uploading file:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Upload Error',
+        text: 'An error occurred while uploading the file. Please try again.',
+      });
     }
-  }
+  };
+  
 
   return (
     <CRow>
@@ -99,5 +132,4 @@ const ButtonGroups = () => {
     </CRow>
   )
 }
-
 export default ButtonGroups

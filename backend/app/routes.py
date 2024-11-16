@@ -2,13 +2,14 @@ import os
 import re
 import socket
 from typing import List, Any
-from fastapi import UploadFile, File, APIRouter, HTTPException, Request
+from fastapi import UploadFile, File, APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
 from passlib.context import CryptContext
 from cryptography.fernet import Fernet
-from .models import User, UserInDB, MongoDBRequest, FirestoreScanRequest, FirebaseHostingScanRequest
-from .services import create_user, get_user_by_username, scan_mongo_db_for_risks, validate_sql_script, scan_firestore_for_risks, scan_firebase_hosting, is_valid_firebase_domain
+from .models import User, UserInDB, MongoDBRequest, FileUploadRecord, FirestoreScanRequest, FirebaseHostingScanRequest
+from .services import create_user, get_user_by_username, scan_mongo_db_for_risks, validate_sql_script, validate_json_script, store_file_upload_record, scan_firestore_for_risks, scan_firebase_hosting, is_valid_firebase_domain
 from fastapi.responses import JSONResponse
+
 
 # Load environment variables
 secret_key = os.getenv("SECRET_KEY")
@@ -28,12 +29,13 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 user_router = APIRouter()
 mongo_scan_router = APIRouter()
 sql_scan_router = APIRouter()
+json_scan_router = APIRouter()
 firebase_scan_router = APIRouter()
 
 @user_router.post("/register")
 async def register(user: User):
     hashed_password = pwd_context.hash(user.password)
-    user_in_db = UserInDB(username=user.username, password=user.password, role=user.role)
+    user_in_db = UserInDB(username=user.username, password=user.hashed_password, role=user.role)
 
     if get_user_by_username(user.username):
         raise HTTPException(status_code=400, detail="Username already registered.")
@@ -96,15 +98,35 @@ async def scan_mongo_db(request: MongoDBRequest):
 
 # Endpoint to receive and validate the SQL file
 @sql_scan_router.post("/upload-sql-file")
-async def upload_sql_file(file: UploadFile = File(...)):
+async def upload_sql_file(file: UploadFile = File(...), user_id: str = "example_user_id"):
     if file.content_type != "text/plain":
         raise HTTPException(status_code=400, detail="Only text files are allowed.")
-
+    
     content = await file.read()
     sql_content = content.decode("utf-8")
     
-    # Validate each SQL statement in the content
+    # Validate SQL content
     analysis = validate_sql_script(sql_content)
+
+    # Save the upload record in MongoDB
+    store_file_upload_record(user_id=user_id, service="SQL")
+
+    return {"analysis": analysis}
+
+@json_scan_router.post("/upload-json-file")
+async def upload_json_file(file: UploadFile = File(...), user_id: str = "example_user_id"):
+    if file.content_type not in ["application/json", "text/plain"]:  # Allow JSON and text files
+        raise HTTPException(status_code=400, detail="Only JSON or text files are allowed.")
+
+    content = await file.read()
+    try:
+        json_content = content.decode("utf-8")  # Decode content for JSON parsing
+        analysis = validate_json_script(json_content)  # Validate JSON content
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="File is not valid JSON format")
+
+    # Save the upload record in MongoDB
+    store_file_upload_record(user_id=user_id, service="JSON")
 
     return {"analysis": analysis}
 

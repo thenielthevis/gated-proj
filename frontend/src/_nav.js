@@ -50,15 +50,28 @@ const _nav = [
   {
     component: CNavItem,
     name: 'JSON Script',
-    to: '/', // Change path
+    to: '/tools/JSONScript', // Change path
     icon: <CIcon icon={cilLayers} customClassName="nav-icon" />,
   },
   {
-    component: CNavItem,
+    component: CNavGroup,
     name: 'Firebase',
-    to: '/tools/Firestore', // Change path
-    icon: <CIcon icon={cilFire} customClassName="nav-icon" />,
-  },
+    to: '/Firebase',
+    icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
+    items: [
+    {
+      component: CNavItem,
+      name: 'Firestore',
+      to: '/tools/Firestore', // Change path
+      icon: <CIcon icon={cilFire} customClassName="nav-icon" />,
+    },
+    {
+      component: CNavItem,
+      name: 'Hosting',
+      to: '/tools/Hosting', // Change path
+      icon: <CIcon icon={cilFire} customClassName="nav-icon" />,
+    },
+  ]},
   {
     component: CNavTitle,
     name: 'Analytics',

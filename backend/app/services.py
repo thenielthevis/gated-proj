@@ -12,10 +12,12 @@ from pymongo.errors import ConnectionFailure
 from bson import ObjectId
 from fastapi import HTTPException
 from dotenv import load_dotenv
-from .models import UserInDB
+from .models import UserInDB, FileUploadRecord
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 from cryptography.fernet import Fernet
+import socket
+import json 
 
 # Load environment variables
 secret_key = os.getenv("SECRET_KEY")
@@ -266,6 +268,19 @@ def scan_mongo_db_for_risks(mongo_uri: str) -> Dict[str, Any]:
 
 # Function to validate SQL script for basic errors
 
+def store_file_upload_record(user_id: Optional[str] = None, service: str = "JSON"):
+    db = get_db()
+    record_data = {
+        "service": service,       # Either "SQL" or "JSON"
+        "created_at": datetime.now(),  # Timestamp of the upload
+    }
+    if user_id:
+        record_data["user_id"] = user_id  # Add user_id if provided
+
+    # Insert the record into MongoDB's file_upload_records collection
+    db.file_upload_records.insert_one(record_data)
+
+
 def validate_sql_script(sql_content: str) -> Dict[str, List[str]]:
     analysis = {
         "errors": [],
@@ -273,8 +288,22 @@ def validate_sql_script(sql_content: str) -> Dict[str, List[str]]:
         "good_practices": []
     }
 
-    if not sql_content:
+    if not sql_content.strip():
         analysis["errors"].append("SQL script is empty.")
+        return analysis
+
+    # Filter out comment lines that start with "--"
+    statements = [
+        line.strip() for line in sql_content.splitlines() 
+        if line.strip() and not line.strip().startswith("--")
+    ]
+    
+    # Join the filtered lines back together as SQL script
+    sql_content = ' '.join(statements)
+    
+    # Validate that the content contains at least one SQL command
+    if not re.search(r"\b(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE)\b", sql_content, re.IGNORECASE):
+        analysis["errors"].append("Invalid SQL format. Only SQL scripts are allowed to upload.")
         return analysis
 
     # Split SQL content by semicolons to handle each statement individually
@@ -692,3 +721,89 @@ def scan_firebase_hosting(domain: str) -> dict:
         }
     except Exception as e:
         return {"status": "error", "error": str(e)}
+
+
+
+def validate_json_script(content: str) -> Dict[str, List[str]]:
+    """
+    Validates the JSON content of a file, categorizing findings into errors, warnings, and good practices.
+    
+    Args:
+        content (str): The file content to validate.
+    
+    Returns:
+        Dict[str, List[str]]: A dictionary containing lists of errors, warnings, and good practices.
+    """
+    analysis = {
+        "errors": [],
+        "warnings": [],
+        "good_practices": []
+    }
+    
+    # Check if content is valid JSON
+    try:
+        data = json.loads(content)
+    except json.JSONDecodeError:
+        analysis["errors"].append("Invalid JSON format. Only JSON format script is allowed to upload.")
+        return analysis
+    
+    # Example validation: Check for specific fields in JSON
+    required_fields = ["username", "password", "email"]
+    for field in required_fields:
+        if field not in data:
+            analysis["errors"].append(f"Missing required field: {field}")
+    
+    # Check if password is hashed
+    if "password" in data:
+        if len(data["password"]) < 60:  # Example: Assuming hashed passwords are at least 60 chars (bcrypt standard)
+            analysis["warnings"].append("Password is not hashed. Please use a secure hash.")
+        else:
+            analysis["good_practices"].append("Password is hashed properly.")
+
+    # Check for nested user profile data as a good practice
+    if "profile" in data.get("user", {}):
+        analysis["good_practices"].append("User profile includes detailed nested data.")
+
+    # Check for user preferences under profile
+    if "preferences" in data.get("user", {}).get("profile", {}):
+        analysis["good_practices"].append("User profile includes preferences, enhancing customization options.")
+
+    # Check if email format is valid
+    email = data.get("email", "")
+    if email and "@" not in email:
+        analysis["warnings"].append("Invalid email format.")
+    else:
+        analysis["good_practices"].append("Email format appears valid.")
+
+    # Validate account status
+    if "account" in data:
+        if data["account"].get("status") not in ["active", "inactive", "suspended"]:
+            analysis["warnings"].append("Account status should be one of 'active', 'inactive', or 'suspended'.")
+        else:
+            analysis["good_practices"].append("Account status is valid.")
+
+    # Validate transaction entries
+    transactions = data.get("transactions", [])
+    if transactions:
+        analysis["good_practices"].append("Transactions data is present and includes purchase history.")
+        
+        for txn in transactions:
+            if "status" not in txn:
+                analysis["errors"].append(f"Transaction {txn.get('id', '')} is missing a status field.")
+            elif txn["status"] not in ["completed", "pending", "failed"]:
+                analysis["warnings"].append(f"Transaction {txn.get('id', '')} has an invalid status value.")
+            if "currency" not in txn or txn["currency"] != "USD":
+                analysis["warnings"].append(f"Transaction {txn.get('id', '')} uses a non-standard currency.")
+
+    # Check privacy settings as a good practice
+    if data.get("settings", {}).get("privacy"):
+        analysis["good_practices"].append("Privacy settings are configured.")
+
+    # Check if data sharing consent is present under privacy settings
+    data_sharing = data.get("settings", {}).get("privacy", {}).get("dataSharing", {})
+    if data_sharing.get("consentGiven", False):
+        analysis["good_practices"].append("User has provided consent for data sharing, adhering to privacy policies.")
+    else:
+        analysis["warnings"].append("User has not provided consent for data sharing. Ensure compliance with privacy regulations.")
+    
+    return analysis

@@ -97,6 +97,7 @@ const MongoDBScanner = () => {
           icon: 'success',
           title: 'Scan Completed',
           text: 'Your MongoDB scan has been completed successfully!',
+          timer: 2000,
         });
       } else {
         Swal.fire({
@@ -110,10 +111,8 @@ const MongoDBScanner = () => {
       Swal.fire({
         icon: 'error',
         title: 'Scan Failed',
-        text: 'An error occurred during the scan. Please check the console for more details.',
+        text: 'An error occurred during the scan.',
       });
-    } finally {
-      Swal.close();
     }
   };
 

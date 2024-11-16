@@ -47,7 +47,11 @@ const Buttons = () => {
 
   const handleKeyUpload = async () => {
     if (!firestoreKey) {
-      alert('Please upload a Firestore key file first.');
+      Swal.fire({
+        icon: 'error',
+        title: 'Missing Key File',
+        text: 'Please upload a Firestore key file first.',
+      });
       return;
     }
   
@@ -57,15 +61,15 @@ const Buttons = () => {
       warnings: [],
       good_practices: [],
     });
-
-     // Show loading spinner using SweetAlert2
-     Swal.fire({
+  
+    // Show loading spinner using SweetAlert2
+    Swal.fire({
       title: 'Scanning Firestore...',
       text: 'Please wait while we scan your Firestore configuration.',
       allowOutsideClick: false,
       didOpen: () => {
         Swal.showLoading();
-      }
+      },
     });
   
     try {
@@ -90,8 +94,7 @@ const Buttons = () => {
         };
   
         // Categorize the results based on the 'category' field
-        data.audit_results.forEach(result => {
-          // Ensure valid result category
+        data.audit_results.forEach((result) => {
           if (result.category === 'Danger') {
             categorizedResults.errors.push(result);
           } else if (result.category === 'Warning') {
@@ -101,26 +104,29 @@ const Buttons = () => {
           }
         });
   
-        // Set the categorized results in state
         setAuditResults(categorizedResults);
-
-        // Close the loading spinner and show success message
+  
         Swal.fire({
           icon: 'success',
           title: 'Scan Completed',
           text: 'Your Firestore scan has been completed successfully!',
+          timer: 2000, 
         });
-
       } else {
         console.error('Invalid or empty audit results', data);
-        alert('Invalid or empty audit results');
+        Swal.fire({
+          icon: 'warning',
+          title: 'No Results',
+          text: 'The scan completed, but no valid results were found.',
+        });
       }
     } catch (error) {
       console.error('Error uploading key:', error);
-      alert('An error occurred while uploading the key.');
-    } finally {
-      // Close the loading spinner
-      Swal.close();
+      Swal.fire({
+        icon: 'error',
+        title: 'Scan Failed',
+        text: 'An error occurred while uploading the key. Please try again later.',
+      });
     }
   };
   

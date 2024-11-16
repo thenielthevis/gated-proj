@@ -17,9 +17,10 @@ import {
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import { cilCheckCircle, cilWarning, cilLoopCircular } from '@coreui/icons';
+import Swal from 'sweetalert2';
 
 const Buttons = () => {
-  const [domain, setDomain] = useState('');  // Store the Firebase Hosting domain
+  const [domain, setDomain] = useState(''); // Store the Firebase Hosting domain
   const [activeTab, setActiveTab] = useState(0);
   const [auditResults, setAuditResults] = useState({
     errors: [],
@@ -32,20 +33,33 @@ const Buttons = () => {
     setDomain(event.target.value);
   };
 
-  // Handle scan request for Firebase Hosting
   const handleScanHosting = async () => {
     if (!domain) {
-      alert('Please enter the Firebase Hosting domain.');
+      Swal.fire({
+        icon: 'error',
+        title: 'Missing Domain',
+        text: 'Please enter the Firebase Hosting domain before proceeding.',
+      });
       return;
     }
-
+  
     // Reset audit results
     setAuditResults({
       errors: [],
       warnings: [],
       good_practices: [],
     });
-
+  
+    // Show loading spinner using SweetAlert2
+    Swal.fire({
+      title: 'Scanning Application...',
+      text: 'Please wait while we scan your Firebase Hosting configuration.',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+  
     try {
       // Send the Firebase Hosting domain to the backend for scanning
       const response = await fetch('http://localhost:8000/firebase/hosting-scan', {
@@ -53,12 +67,12 @@ const Buttons = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ domain }),  // Sending the domain instead of Firestore key
+        body: JSON.stringify({ domain }), // Sending the domain instead of Firestore key
       });
-
+  
       const data = await response.json();
       console.log('Backend response:', data);
-
+  
       // Check if the response contains audit results
       if (data.status === 'Scanning completed' && Array.isArray(data.audit_results)) {
         const categorizedResults = {
@@ -66,7 +80,7 @@ const Buttons = () => {
           warnings: [],
           good_practices: [],
         };
-
+  
         // Categorize the results based on the 'category' field
         data.audit_results.forEach((result) => {
           if (result.category === 'Danger') {
@@ -77,18 +91,35 @@ const Buttons = () => {
             categorizedResults.good_practices.push(result);
           }
         });
-
-        // Set the categorized results in state
+  
         setAuditResults(categorizedResults);
+  
+        Swal.fire({
+          icon: 'success',
+          title: 'Scan Completed',
+          text: 'Your Firebase Hosting scan has been completed successfully!',
+          timer: 2000,
+          showConfirmButton: false,
+        });
       } else {
         console.error('Invalid or empty audit results', data);
-        alert('Invalid or empty audit results');
+        Swal.fire({
+          icon: 'warning',
+          title: 'No Results',
+          text: 'The scan completed, but no results were found.',
+        });
       }
     } catch (error) {
       console.error('Error scanning hosting:', error);
-      alert('An error occurred while scanning the hosting domain.');
+  
+      // Show error alert
+      Swal.fire({
+        icon: 'error',
+        title: 'Scan Failed',
+        text: 'An error occurred while scanning the hosting domain. Please try again later.',
+      });
     }
-  };
+  };  
 
   return (
     <>

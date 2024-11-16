@@ -18,6 +18,7 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilCheckCircle, cilLoopCircular, cilPlant, cilWarning } from '@coreui/icons'
 import { bottom } from '@popperjs/core'
+import Swal from 'sweetalert2';
 
 const Buttons = () => {
   const [file, setFile] = useState(null)
@@ -30,14 +31,27 @@ const Buttons = () => {
 
   const handleFileUpload = async () => {
     if (!file) {
-      alert('Please select a file first.')
-      return
+      Swal.fire({
+        icon: 'error',
+        title: 'No File Selected',
+        text: 'Please select a file first.',
+      });
+      return;
     }
 
     const formData = new FormData()
     formData.append('file', file)
 
     try {
+      Swal.fire({
+        title: 'Uploading File...',
+        text: 'Please wait while your file is being uploaded.',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+
       const response = await fetch('http://localhost:8000/sql/upload-sql-file', {
         method: 'POST',
         body: formData,
@@ -45,6 +59,14 @@ const Buttons = () => {
 
       const data = await response.json()
       setAnalysisResults(data.analysis)
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Upload Successful',
+        text: 'Your file has been uploaded and processed successfully!',
+        timer: 2000,
+      });
+
     } catch (error) {
       console.error('Error uploading file:', error)
     }

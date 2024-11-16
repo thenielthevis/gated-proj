@@ -1,9 +1,8 @@
 import React, { useState } from 'react'
-import { CButton, CCard, CCardBody, CCardHeader, CCol, CRow, CTabList, CTab, CTabContent, CTabPanel, CTabs } from '@coreui/react'
+import { CButton, CCard, CCardBody, CCardHeader, CCol, CRow } from '@coreui/react'
 
 const Buttons = () => {
   const [file, setFile] = useState(null)
-  const [activeTab, setActiveTab] = useState('danger')
   const [analysisResults, setAnalysisResults] = useState(null)
 
   // Handle file selection
@@ -49,53 +48,45 @@ const Buttons = () => {
       </CCol>
       <CCol xs="12" lg="6">
         {analysisResults && (
-          <CTabs activeItemKey={activeTab} onActiveTabChange={setActiveTab}>
-            <CTabList>
-              <CTab itemKey="danger">Danger</CTab>
-              <CTab itemKey="warnings">Warnings</CTab>
-              <CTab itemKey="good">Good</CTab>
-            </CTabList>
-            <CTabContent>
-              {/* Danger Tab */}
-              <CTabPanel className="p-3" itemKey="danger">
-                {analysisResults.errors.length > 0 ? (
-                  <ul>
-                    {analysisResults.errors.map((error, index) => (
-                      <li key={index}>{error}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No dangerous issues detected.</p>
-                )}
-              </CTabPanel>
+          <div>
+            <h5>Scan Results:</h5>
 
-              {/* Warnings Tab */}
-              <CTabPanel className="p-3" itemKey="warnings">
-                {analysisResults.warnings.length > 0 ? (
-                  <ul>
-                    {analysisResults.warnings.map((warning, index) => (
-                      <li key={index}>{warning}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No warnings detected.</p>
-                )}
-              </CTabPanel>
+            {/* Display Dangers */}
+            {analysisResults.errors.length > 0 && (
+              <>
+                <h6>Danger:</h6>
+                <ul>
+                  {analysisResults.errors.map((error, index) => (
+                    <li key={index}>{error}</li>
+                  ))}
+                </ul>
+              </>
+            )}
 
-              {/* Good Tab */}
-              <CTabPanel className="p-3" itemKey="good">
-                {analysisResults.good_practices.length > 0 ? (
-                  <ul>
-                    {analysisResults.good_practices.map((practice, index) => (
-                      <li key={index}>{practice.replace('Good practice: ', '')}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No good practices found.</p>
-                )}
-              </CTabPanel>
-            </CTabContent>
-          </CTabs>
+            {/* Display Warnings */}
+            {analysisResults.warnings.length > 0 && (
+              <>
+                <h6>Warnings:</h6>
+                <ul>
+                  {analysisResults.warnings.map((warning, index) => (
+                    <li key={index}>{warning}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+
+            {/* Display Good Practices */}
+            {analysisResults.good_practices.length > 0 && (
+              <>
+                <h6>Good:</h6>
+                <ul>
+                  {analysisResults.good_practices.map((practice, index) => (
+                    <li key={index}>{practice.replace('Good practice: ', '')}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
         )}
       </CCol>
     </CRow>
