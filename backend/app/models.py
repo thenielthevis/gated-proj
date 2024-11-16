@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from bson import ObjectId
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 # USER login and register
@@ -48,3 +48,9 @@ class ScanResult(BaseModel):
 
 class MongoDBRequest(BaseModel):
     mongodb_uri: str
+
+class FirestoreScanRequest(BaseModel):
+    firestore_key: Dict[str, Any]
+
+class FirebaseHostingScanRequest(BaseModel):
+    domain: str

@@ -1,12 +1,13 @@
 import os
 import re
-from typing import List
+import socket
+from typing import List, Any
 from fastapi import UploadFile, File, APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from passlib.context import CryptContext
 from cryptography.fernet import Fernet
-from .models import User, UserInDB, MongoDBRequest
-from .services import create_user, get_user_by_username, scan_mongo_db_for_risks, validate_sql_script
+from .models import User, UserInDB, MongoDBRequest, FirestoreScanRequest, FirebaseHostingScanRequest
+from .services import create_user, get_user_by_username, scan_mongo_db_for_risks, validate_sql_script, scan_firestore_for_risks, scan_firebase_hosting, is_valid_firebase_domain
 from fastapi.responses import JSONResponse
 
 # Load environment variables
@@ -27,6 +28,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 user_router = APIRouter()
 mongo_scan_router = APIRouter()
 sql_scan_router = APIRouter()
+firebase_scan_router = APIRouter()
 
 @user_router.post("/register")
 async def register(user: User):
@@ -85,7 +87,7 @@ async def scan_mongo_db(request: MongoDBRequest):
         print("Audit results:", audit_results)
 
         # Return the scan results as a response
-        return {"status": "Scanning completed", "uri": mongo_uri, "audit_results": audit_results}
+        return audit_results
     
     except Exception as e:
         # Log the error and send it in the response
@@ -105,3 +107,63 @@ async def upload_sql_file(file: UploadFile = File(...)):
     analysis = validate_sql_script(sql_content)
 
     return {"analysis": analysis}
+
+@firebase_scan_router.post("/firestore-scan")
+async def firestore_scan(request: FirestoreScanRequest):
+    """
+    Endpoint to scan Firestore databases for security risks.
+    """
+    try:
+        firestore_key = request.firestore_key  # Extract Firestore key from request
+
+        if not firestore_key:
+            raise ValueError("Firestore service account key is required")
+
+        # Run the Firestore risk scan
+        audit_results = scan_firestore_for_risks(firestore_key)  # Custom function for scan
+
+        # Log the audit results
+        print("Audit results:", audit_results)
+
+        # Return the scan results as a response
+        return audit_results
+    
+    except Exception as e:
+        # Log the error and send it in the response
+        print(f"Error during Firestore scan: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error during Firestore scanning: {str(e)}")
+
+@firebase_scan_router.post("/hosting-scan")
+async def firebase_hosting_scan(request: FirebaseHostingScanRequest) -> Any:
+    """
+    Endpoint to scan Firebase Hosting sites for security, performance, and configuration issues.
+    """
+    try:
+        domain = request.domain.strip().lower()  # Extract and normalize the domain
+        
+        if not domain:
+            raise ValueError("Firebase Hosting domain URL is required")
+
+        # Validate if the domain is a legitimate Firebase Hosting domain
+        if not is_valid_firebase_domain(domain):
+            raise ValueError(f"The domain '{domain}' is not a valid Firebase Hosting domain.")
+
+        # Optionally, perform DNS lookup (can be skipped if Firebase domain check is enough)
+        try:
+            socket.gethostbyname(domain)  # Check if the domain resolves
+        except socket.gaierror:
+            raise ValueError(f"The domain '{domain}' does not resolve to any IP address.")
+
+        # Run the Firebase Hosting scan
+        audit_results = scan_firebase_hosting(domain)
+
+        # Log the audit results
+        print("Hosting scan results:", audit_results)
+
+        # Return the scan results
+        return audit_results
+    
+    except Exception as e:
+        # Log the error and send it in the response
+        print(f"Error during Firebase Hosting scan: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Error: {str(e)}")

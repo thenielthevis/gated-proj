@@ -9,7 +9,7 @@ const Typography = React.lazy(() => import('./views/theme/typography/Typography'
 const MongoDB = React.lazy(() => import('./views/tools/MongoDB'))
 const SQLScript = React.lazy(() => import('./views/tools/SQLScript'))
 // const JSONScript = React.lazy(() => import('./views/tools/JSONScript'))
-// const Firebase = React.lazy(() => import('./views/tools/Firebase'))
+const Firebase = React.lazy(() => import('./views/tools/Firestore'))
 
 // Base
 const Accordion = React.lazy(() => import('./views/base/accordion/Accordion'))
@@ -108,7 +108,7 @@ const routes = [
   { path: '/tools/MongoDB', name: 'Mongo DB', element: MongoDB },
   { path: '/tools/SQLScript', name: 'SQL Script', element: SQLScript },
   // { path: '/tools/JSONScript', name: 'JSON Script', element: JSONScript },
-  // { path: '/tools/Firebase', name: 'Firebase', element: Firebase },
+  { path: '/tools/Firestore', name: 'Firebase', element: Firebase },
 ]
 
 export default routes

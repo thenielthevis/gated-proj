@@ -56,7 +56,7 @@ const _nav = [
   {
     component: CNavItem,
     name: 'Firebase',
-    to: '/', // Change path
+    to: '/tools/Firestore', // Change path
     icon: <CIcon icon={cilFire} customClassName="nav-icon" />,
   },
   {

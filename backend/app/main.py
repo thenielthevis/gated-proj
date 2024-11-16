@@ -10,7 +10,7 @@ from pymongo import MongoClient
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from uvicorn.config import Config
-from .routes import user_router, mongo_scan_router, sql_scan_router  # Import sql_scan_router
+from .routes import user_router, mongo_scan_router, sql_scan_router, firebase_scan_router  # Import sql_scan_router
 from urllib.parse import urlparse
 from cryptography.fernet import Fernet
 
@@ -34,6 +34,7 @@ app.add_middleware(
 app.include_router(user_router, prefix="/users")
 app.include_router(mongo_scan_router, prefix="/scan")
 app.include_router(sql_scan_router, prefix="/sql")  # Include the SQL scan router with a prefix
+app.include_router(firebase_scan_router, prefix="/firebase")
 
 # SECRET_KEY validation
 secret_key = os.getenv("SECRET_KEY")
