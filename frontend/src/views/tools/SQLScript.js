@@ -16,8 +16,9 @@ import {
   CCallout,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilCheckCircle, cilLoopCircular, cilPlant, cilWarning } from '@coreui/icons'
-import { bottom } from '@popperjs/core'
+import { cilCheckCircle, cilLoopCircular, cilWarning } from '@coreui/icons'
+import { jsPDF } from 'jspdf' // Import jsPDF for PDF export
+import 'jspdf-autotable'
 import Swal from 'sweetalert2';
 
 const Buttons = () => {
@@ -72,6 +73,66 @@ const Buttons = () => {
     }
   }
 
+  const exportToPDF = () => {
+    const doc = new jsPDF()
+    const pageWidth = doc.internal.pageSize.getWidth()
+
+    // Title
+    doc.setFontSize(16)
+    doc.text('SQL Script Analysis Report', pageWidth / 2, 20, { align: 'center' })
+
+    // Function to create table data format for each section
+    const createTableData = (title, items) => {
+      if (items.length === 0) {
+        return [[`${title} - No issues detected.`]]
+      }
+      return items.map((item, index) => [`${title} #${index + 1}`, item])
+    }
+    // Data for Dangers Table
+    const dangersTableData = createTableData('Danger', analysisResults.errors)
+    // Data for Warnings Table
+    const warningsTableData = createTableData('Warning', analysisResults.warnings)
+
+    // Data for Good Practices Table
+    const goodPracticesTableData = createTableData('Good Practice', analysisResults.good_practices)
+
+    // Add tables to PDF
+    const startY = 30 // Initial Y position for the first table
+
+    // Add Danger table
+    doc.autoTable({
+      startY,
+      head: [['Type', 'Description']],
+      body: dangersTableData,
+      theme: 'grid',
+      headStyles: { fillColor: [220, 53, 69], textColor: 255 }, // Red for Danger
+      columnStyles: { 1: { cellWidth: 'auto' } }, // Auto wrap
+    })
+
+    // Add Warning table
+    doc.autoTable({
+      startY: doc.previousAutoTable.finalY + 10,
+      head: [['Type', 'Description']],
+      body: warningsTableData,
+      theme: 'grid',
+      headStyles: { fillColor: [255, 193, 7], textColor: 0 }, // Yellow for Warning
+      columnStyles: { 1: { cellWidth: 'auto' } },
+    })
+
+    // Add Good Practices table
+    doc.autoTable({
+      startY: doc.previousAutoTable.finalY + 10,
+      head: [['Type', 'Description']],
+      body: goodPracticesTableData,
+      theme: 'grid',
+      headStyles: { fillColor: [40, 167, 69], textColor: 255 }, // Green for Good Practices
+      columnStyles: { 1: { cellWidth: 'auto' } },
+    })
+
+    // Save the PDF
+    doc.save('SQL_Script_Analysis_Report.pdf');
+  }
+
   return (
     <>
       <CCallout color="primary">
@@ -98,7 +159,12 @@ const Buttons = () => {
             variant="underline-border"
             className="mt-10"
           >
-            <CCardHeader>SQL Script Analysis Result</CCardHeader>
+            <CCardHeader>
+              SQL Script Analysis Result
+              <CButton color="success" className="float-end" onClick={exportToPDF}>
+                Export as PDF
+              </CButton>
+            </CCardHeader>
             <CTabList variant="underline-border">
               <CTab className="p-3" aria-controls="danger-tab-pane" itemKey="danger">Danger</CTab>
               <CTab className="p-3" aria-controls="warning-tab-pane" itemKey="warnings">Warnings</CTab>
@@ -130,7 +196,6 @@ const Buttons = () => {
                   <CAccordion activeItemKey={1}>
                     {analysisResults.warnings.map((warning, index) => (
                       <CAccordionItem itemKey={index + 1} key={index}>
-                        {/* Add icon here */}
                         <CAccordionHeader>
                           <CIcon icon={cilLoopCircular} className="me-2" />
                           Warning #{index + 1}
@@ -153,8 +218,8 @@ const Buttons = () => {
                         <CAccordionHeader>
                           <CIcon icon={cilCheckCircle} className="me-2" />
                           Good Practice #{index + 1}
-                          </CAccordionHeader>
-                        <CAccordionBody>{practice.replace('Good practice: ', '')}</CAccordionBody>
+                        </CAccordionHeader>
+                        <CAccordionBody>{practice}</CAccordionBody>
                       </CAccordionItem>
                     ))}
                   </CAccordion>

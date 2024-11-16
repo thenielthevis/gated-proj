@@ -90,27 +90,27 @@ const _nav = [
   },
   {
     component: CNavTitle,
-    name: 'Components',
+    name: 'Educational Materials',
   },
   {
     component: CNavGroup,
-    name: 'Base',
+    name: 'SQL',
     to: '/base',
     icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
     items: [
       {
         component: CNavItem,
-        name: 'Accordion',
+        name: 'About SQL',
         to: '/base/accordion',
       },
       {
         component: CNavItem,
-        name: 'Breadcrumb',
+        name: 'Good Practices',
         to: '/base/breadcrumbs',
       },
       {
         component: CNavItem,
-        name: 'Cards',
+        name: 'Mistakes to Avoid',
         to: '/base/cards',
       },
       {
