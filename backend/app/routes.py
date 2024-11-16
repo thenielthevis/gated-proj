@@ -34,7 +34,7 @@ json_scan_router = APIRouter()
 @user_router.post("/register")
 async def register(user: User):
     hashed_password = pwd_context.hash(user.password)
-    user_in_db = UserInDB(username=user.username, password=user.password, role=user.role)
+    user_in_db = UserInDB(username=user.username, password=user.hashed_password, role=user.role)
 
     if get_user_by_username(user.username):
         raise HTTPException(status_code=400, detail="Username already registered.")

@@ -8,7 +8,7 @@ const Typography = React.lazy(() => import('./views/theme/typography/Typography'
 // Tools
 const MongoDB = React.lazy(() => import('./views/tools/MongoDB'))
 const SQLScript = React.lazy(() => import('./views/tools/SQLScript'))
-// const JSONScript = React.lazy(() => import('./views/tools/JSONScript'))
+const JSONScript = React.lazy(() => import('./views/tools/JSONScript'))
 // const Firebase = React.lazy(() => import('./views/tools/Firebase'))
 
 // Base
@@ -107,7 +107,7 @@ const routes = [
   // Tools
   { path: '/tools/MongoDB', name: 'Mongo DB', element: MongoDB },
   { path: '/tools/SQLScript', name: 'SQL Script', element: SQLScript },
-  // { path: '/tools/JSONScript', name: 'JSON Script', element: JSONScript },
+  { path: '/tools/JSONScript', name: 'JSON Script', element: JSONScript },
   // { path: '/tools/Firebase', name: 'Firebase', element: Firebase },
 ]
 

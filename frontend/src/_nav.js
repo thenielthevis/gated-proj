@@ -50,7 +50,7 @@ const _nav = [
   {
     component: CNavItem,
     name: 'JSON Script',
-    to: '/', // Change path
+    to: '/tools/JSONScript', // Change path
     icon: <CIcon icon={cilLayers} customClassName="nav-icon" />,
   },
   {
