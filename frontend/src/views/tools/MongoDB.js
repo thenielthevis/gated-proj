@@ -122,7 +122,7 @@ const MongoDBScanner = () => {
         <h6 className="font-w-500">Notice!</h6>
         This MongoDB scanning procedure may take a few minutes. Please do not click the scan button multiple times. Ensure you provide a valid MongoDB URI.
       </CCallout>
-
+  
       <CCard>
         <CCardHeader>Enter MongoDB URI</CCardHeader>
         <CCardBody>
@@ -138,8 +138,8 @@ const MongoDBScanner = () => {
           </CButton>
         </CCardBody>
       </CCard>
-
-      <CCard className="p-0">
+  
+      <CCard className="p-0" style={{marginBottom: '30px'}}>
         <CCardHeader>Scan Results</CCardHeader>
         <CTabs
           activeItemKey={activeTab}
@@ -178,7 +178,7 @@ const MongoDBScanner = () => {
                 <p>No dangers detected.</p>
               )}
             </CTabPanel>
-
+  
             {/* Warnings Tab */}
             <CTabPanel className="p-3" itemKey={1}>
               {auditResults.warnings.length > 0 ? (
@@ -199,7 +199,7 @@ const MongoDBScanner = () => {
                 <p>No warnings detected.</p>
               )}
             </CTabPanel>
-
+  
             {/* Good Practices Tab */}
             <CTabPanel className="p-3" itemKey={2}>
               {auditResults.good_practices.length > 0 ? (
@@ -222,9 +222,41 @@ const MongoDBScanner = () => {
             </CTabPanel>
           </CTabContent>
         </CTabs>
+      {/* Educational Links Section */}
+      {(auditResults.errors.length > 0 || auditResults.warnings.length > 0 || auditResults.good_practices.length > 0) && (
+        <CCard className="mt-4">
+          <CCardBody>
+            <h5>Educational Resources</h5>
+            <p>Learn how to mitigate issues and implement best practices:</p>
+            <ul>
+              {auditResults.errors.length > 0 && (
+                <li>
+                  <a href="/icons/coreui-icons#/forms/form-control" target="_blank" rel="noopener noreferrer">
+                    What is NoSQL Databases?
+                  </a>
+                </li>
+              )}
+              {auditResults.warnings.length > 0 && (
+                <li>
+                  <a href="/icons/coreui-icons#/forms/select" target="_blank" rel="noopener noreferrer">
+                    Common Risks in Using MongoDB and Other NoSQL Databases
+                  </a>
+                </li>
+              )}
+              {auditResults.good_practices.length > 0 && (
+                <li>
+                  <a href="/icons/coreui-icons#/forms/checks-radios" target="_blank" rel="noopener noreferrer">
+                    Best Practices for Securing NoSQL Databases
+                  </a>
+                </li>
+              )}
+            </ul>
+          </CCardBody>
+        </CCard>
+      )}
       </CCard>
     </>
-  );
+  );  
 };
 
 export default MongoDBScanner;

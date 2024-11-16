@@ -144,7 +144,7 @@ const Buttons = () => {
         </CCardBody>
       </CCard>
 
-      <CCard className="p-0">
+      <CCard className="p-0" style={{marginBottom: '30px'}}>
         {auditResults && (
           <CTabs
             activeItemKey={activeTab}
@@ -229,6 +229,27 @@ const Buttons = () => {
               </CTabPanel>
             </CTabContent>
           </CTabs>
+        )}
+        
+        {/* Educational Links Section */}
+        {(auditResults.errors.length > 0 || auditResults.warnings.length > 0 || auditResults.good_practices.length > 0) && (
+          <CCard className="mt-4">
+            <CCardBody>
+              <h5>Learn how to mitigate these risks now before it's too late!</h5>
+              <ul>
+                <li>
+                  <a href="/icons/coreui-icons#/icons/flags" target="_blank" rel="noopener noreferrer">
+                    What is Firebase Hosting?
+                  </a>
+                </li>
+                <li>
+                  <a href="/icons/coreui-icons#/icons/brands" target="_blank" rel="noopener noreferrer">
+                    Benefits and Challenges
+                  </a>
+                </li>
+              </ul>
+            </CCardBody>
+          </CCard>
         )}
       </CCard>
     </>

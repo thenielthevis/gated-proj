@@ -230,6 +230,51 @@ const SQLScript = () => {
           </CTabs>
         )}
       </CCard>
+
+      {/* Educational Materials Section */}
+      {analysisResults && (
+        <CCard className="mt-4" style={{marginBottom: '30px'}}>
+          <CCardBody>
+            <h5>Educational Materials</h5>
+            <h6>Learn how to mitigate these risks now before it's too late!</h6>
+            <ul>
+              {analysisResults.errors.length > 0 && (
+                <li>
+                  <a
+                    href="/icons/coreui-icons#/base/accordion"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    What is SQL?
+                  </a>
+                </li>
+              )}
+              {analysisResults.warnings.length > 0 && (
+                <li>
+                  <a
+                    href="/icons/coreui-icons#/base/breadcrumbs"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    SQL Best Practices
+                  </a>
+                </li>
+              )}
+              {analysisResults.good_practices.length > 0 && (
+                <li>
+                  <a
+                    href="/icons/coreui-icons#/base/cards"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Avoid these 7 SQL Mistakes for Better Database Management
+                  </a>
+                </li>
+              )}
+            </ul>
+          </CCardBody>
+        </CCard>
+      )}
     </>
   )
 }

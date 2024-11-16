@@ -166,7 +166,7 @@ const JSONScript = () => {
         This JSON Script scanning procedure may take a few moments to finish.
         Additionally, make sure that the file contains a valid JSON Script.
       </CCallout>
-
+  
       <CCard className="p-0 mb-50">
         <CCardHeader>Upload JSON Script</CCardHeader>
         <CCardBody>
@@ -176,8 +176,8 @@ const JSONScript = () => {
           </CButton>
         </CCardBody>
       </CCard>
-
-      <CCard className="p-0">
+  
+      <CCard className="p-0" style={{ marginBottom: '30px' }}>
         {analysisResults && (
           <CTabs
             activeItemKey={activeTab}
@@ -215,7 +215,7 @@ const JSONScript = () => {
                   <p>No dangerous issues detected.</p>
                 )}
               </CTabPanel>
-
+  
               {/* Warnings Tab */}
               <CTabPanel aria-labelledby="warning-tab-pane" className="p-3" itemKey="warnings">
                 {analysisResults.warnings.length > 0 ? (
@@ -234,7 +234,7 @@ const JSONScript = () => {
                   <p>No warnings detected.</p>
                 )}
               </CTabPanel>
-
+  
               {/* Good Practices Tab */}
               <CTabPanel aria-labelledby="good-tab-pane" className="p-3" itemKey="good">
                 {analysisResults.good_practices.length > 0 ? (
@@ -257,8 +257,53 @@ const JSONScript = () => {
           </CTabs>
         )}
       </CCard>
+  
+      {/* Educational Materials Section */}
+      {analysisResults && (
+        <CCard className="mt-4" style={{marginBottom: '30px'}}>
+          <CCardBody>
+            <h5>Educational Materials</h5>
+            <h6>Learn how to mitigate these risks now before it's too late!</h6>
+            <ul>
+              {analysisResults.errors.length > 0 && (
+                <li>
+                  <a
+                    href="http://localhost:3000/icons/coreui-icons#/buttons/buttons"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    About JSON
+                  </a>
+                </li>
+              )}
+              {analysisResults.warnings.length > 0 && (
+                <li>
+                  <a
+                    href="/icons/coreui-icons#/buttons/button-groups"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Good Practices for Working with JSON
+                  </a>
+                </li>
+              )}
+              {analysisResults.good_practices.length > 0 && (
+                <li>
+                  <a
+                    href="/icons/coreui-icons#/buttons/dropdowns"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Common JSON Mistakes and How to Avoid Them
+                  </a>
+                </li>
+              )}
+            </ul>
+          </CCardBody>
+        </CCard>
+      )}
     </>
   );
-};
+}  
 
 export default JSONScript;
