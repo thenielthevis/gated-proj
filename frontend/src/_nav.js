@@ -100,87 +100,87 @@ const _nav = [
         name: 'Mistakes to Avoid',
         to: '/base/cards',
       },
-      {
-        component: CNavItem,
-        name: 'Carousel',
-        to: '/base/carousels',
-      },
-      {
-        component: CNavItem,
-        name: 'Collapse',
-        to: '/base/collapses',
-      },
-      {
-        component: CNavItem,
-        name: 'List group',
-        to: '/base/list-groups',
-      },
-      {
-        component: CNavItem,
-        name: 'Navs & Tabs',
-        to: '/base/navs',
-      },
-      {
-        component: CNavItem,
-        name: 'Pagination',
-        to: '/base/paginations',
-      },
-      {
-        component: CNavItem,
-        name: 'Placeholders',
-        to: '/base/placeholders',
-      },
-      {
-        component: CNavItem,
-        name: 'Popovers',
-        to: '/base/popovers',
-      },
-      {
-        component: CNavItem,
-        name: 'Progress',
-        to: '/base/progress',
-      },
-      {
-        component: CNavItem,
-        name: 'Spinners',
-        to: '/base/spinners',
-      },
-      {
-        component: CNavItem,
-        name: 'Tables',
-        to: '/base/tables',
-      },
-      {
-        component: CNavItem,
-        name: 'Tabs',
-        to: '/base/tabs',
-      },
-      {
-        component: CNavItem,
-        name: 'Tooltips',
-        to: '/base/tooltips',
-      },
+      // {
+      //   component: CNavItem,
+      //   name: 'Carousel',
+      //   to: '/base/carousels',
+      // },
+      // {
+      //   component: CNavItem,
+      //   name: 'Collapse',
+      //   to: '/base/collapses',
+      // },
+      // {
+      //   component: CNavItem,
+      //   name: 'List group',
+      //   to: '/base/list-groups',
+      // },
+      // {
+      //   component: CNavItem,
+      //   name: 'Navs & Tabs',
+      //   to: '/base/navs',
+      // },
+      // {
+      //   component: CNavItem,
+      //   name: 'Pagination',
+      //   to: '/base/paginations',
+      // },
+      // {
+      //   component: CNavItem,
+      //   name: 'Placeholders',
+      //   to: '/base/placeholders',
+      // },
+      // {
+      //   component: CNavItem,
+      //   name: 'Popovers',
+      //   to: '/base/popovers',
+      // },
+      // {
+      //   component: CNavItem,
+      //   name: 'Progress',
+      //   to: '/base/progress',
+      // },
+      // {
+      //   component: CNavItem,
+      //   name: 'Spinners',
+      //   to: '/base/spinners',
+      // },
+      // {
+      //   component: CNavItem,
+      //   name: 'Tables',
+      //   to: '/base/tables',
+      // },
+      // {
+      //   component: CNavItem,
+      //   name: 'Tabs',
+      //   to: '/base/tabs',
+      // },
+      // {
+      //   component: CNavItem,
+      //   name: 'Tooltips',
+      //   to: '/base/tooltips',
+      // },
     ],
   },
   {
     component: CNavGroup,
-    name: 'Buttons',
+    name: 'JSON',
     to: '/buttons',
     icon: <CIcon icon={cilCursor} customClassName="nav-icon" />,
     items: [
       {
         component: CNavItem,
-        name: 'Buttons',
+        name: 'About JSON',
         to: '/buttons/buttons',
       },
       {
         component: CNavItem,
-        name: 'Buttons groups',
+        name: 'Good Practices',
         to: '/buttons/button-groups',
       },
       {
         component: CNavItem,
-        name: 'Dropdowns',
+        name: 'Mistakes to Avoid',
         to: '/buttons/dropdowns',
       },
     ],

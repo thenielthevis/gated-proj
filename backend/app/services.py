@@ -279,6 +279,15 @@ def validate_sql_script(sql_content: str) -> Dict[str, List[str]]:
         "good_practices": []
     }
 
+    # Check if the content is a JSON format
+    try:
+        json.loads(sql_content)
+        analysis["errors"].append("Invalid SQL format. JSON format detected. Only SQL scripts are allowed to upload.")
+        return analysis
+    except json.JSONDecodeError:
+        # Continue with SQL validation if JSON loading fails
+        pass
+
     if not sql_content.strip():
         analysis["errors"].append("SQL script is empty.")
         return analysis
@@ -347,7 +356,6 @@ def validate_sql_script(sql_content: str) -> Dict[str, List[str]]:
         # Check for valid SQL command
         if not re.search(r"^(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE)\b", statement, re.IGNORECASE):
             analysis["errors"].append(f"No valid SQL command found in statement: {statement}. \nTip: Ensure SQL keywords are correct.")
-
 
         # Check for unbalanced parentheses
         if statement.count('(') != statement.count(')'):
