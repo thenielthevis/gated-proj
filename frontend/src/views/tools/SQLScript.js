@@ -174,7 +174,7 @@ const SQLScript = () => {
                 <CTab itemKey={2}>Good Practices</CTab>
               </CTabList>
 
-              <CTabContent>
+              <CTabContent style={{margin: '15px'}}>
                 {/* Danger Section */}
                 <CTabPanel itemKey={0}>
                   {analysisResults.danger.length > 0 ? (
