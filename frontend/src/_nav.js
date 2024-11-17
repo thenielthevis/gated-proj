@@ -94,12 +94,12 @@ const _nav = [
     to: '/charts', 
     icon: <CIcon icon={cilChartPie} customClassName="nav-icon" />,
   },
-  {
-    component: CNavItem,
-    name: 'Report',
-    to: '/', // Change path
-    icon: <CIcon icon={cilFile} customClassName="nav-icon" />,
-  },
+  // {
+  //   component: CNavItem,
+  //   name: 'Report',
+  //   to: '/', // Change path
+  //   icon: <CIcon icon={cilFile} customClassName="nav-icon" />,
+  // },
   ...(localStorage.getItem('role') === 'user'
   ? [
       {
