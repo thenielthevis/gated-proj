@@ -18,6 +18,8 @@ import {
   cilPuzzle,
   cilSpeedometer,
   cilStar,
+  cilAccountLogout,
+  cilUser
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 // Function to handle logout action
@@ -27,16 +29,20 @@ const handleLogout = () => {
 }
 
 const _nav = [
-  {
-    component: CNavItem,
-    name: 'Dashboard',
-    to: '/dashboard',
-    icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
-    badge: {
-      color: 'info',
-      text: 'NEW',
-    },
-  },
+  ...(localStorage.getItem('role') === 'admin'
+    ? [
+        {
+          component: CNavItem,
+          name: 'Dashboard',
+          to: '/dashboard',
+          icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
+          badge: {
+            color: 'info',
+            text: 'NEW',
+          },
+        },
+      ]
+    : []), // If the user is not an admin, this section will not be included in the navigation menu
   {
     component: CNavTitle,
     name: 'Tools',
@@ -285,13 +291,18 @@ const _nav = [
     ],
   },
   {
+    component: CNavTitle,
+    name: 'Profile',
+  },
+  {
     component: CNavGroup,
     name: 'Account',
-    icon: <CIcon icon={cilBell} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilUser} customClassName="nav-icon" />,
     items: [
       {
         component: CNavItem,
         name: 'Logout',
+        icon: <CIcon icon={cilAccountLogout} customClassName="nav-icon" />,
         to: '#',
         onClick: handleLogout,
       },

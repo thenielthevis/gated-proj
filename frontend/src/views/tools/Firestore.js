@@ -31,106 +31,101 @@ const Buttons = () => {
   });
 
   // Handle file input
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const parsedKey = JSON.parse(e.target.result);
-          setFirestoreKey(parsedKey);
-        } catch (error) {
-          alert('Invalid JSON file. Please upload a valid Firestore key file.');
-        }
-      };
-      reader.readAsText(file);
-    }
-  };
-
-  const handleKeyUpload = async () => {
-    if (!firestoreKey) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Missing Key File',
-        text: 'Please upload a Firestore key file first.',
-      });
-      return;
-    }
-  
-    // Reset audit results
-    setAuditResults({
-      errors: [],
-      warnings: [],
-      good_practices: [],
-    });
-  
-    // Show loading spinner using SweetAlert2
-    Swal.fire({
-      title: 'Scanning Firestore...',
-      text: 'Please wait while we scan your Firestore configuration.',
-      allowOutsideClick: false,
-      didOpen: () => {
-        Swal.showLoading();
-      },
-    });
-  
-    try {
-      // Send the Firestore key to the backend for scanning
-      const response = await fetch('http://localhost:8000/firebase/firestore-scan', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ firestore_key: firestoreKey }),
-      });
-  
-      const data = await response.json();
-      console.log('Backend response:', data);
-  
-      // Check if the response contains audit results
-      if (data.status === 'Scanning completed' && Array.isArray(data.audit_results)) {
-        const categorizedResults = {
-          errors: [],
-          warnings: [],
-          good_practices: [],
-        };
-  
-        // Categorize the results based on the 'category' field
-        data.audit_results.forEach((result) => {
-          if (result.category === 'Danger') {
-            categorizedResults.errors.push(result);
-          } else if (result.category === 'Warning') {
-            categorizedResults.warnings.push(result);
-          } else if (result.category === 'Good') {
-            categorizedResults.good_practices.push(result);
-          }
-        });
-  
-        setAuditResults(categorizedResults);
-  
+const handleFileUpload = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const parsedKey = JSON.parse(e.target.result);
+        setFirestoreKey(parsedKey);
+      } catch (error) {
         Swal.fire({
-          icon: 'success',
-          title: 'Scan Completed',
-          text: 'Your Firestore scan has been completed successfully!',
-          timer: 2000, // Show for 2 seconds
-        });
-      } else {
-        console.error('Invalid or empty audit results', data);
-        Swal.fire({
-          icon: 'warning',
-          title: 'No Results',
-          text: 'The scan completed, but no valid results were found.',
+          icon: 'error',
+          title: 'Invalid File',
+          text: 'Please upload a valid JSON Firestore key file.',
         });
       }
-    } catch (error) {
-      console.error('Error uploading key:', error);
+    };
+    reader.readAsText(file);
+  }
+};
+
+const handleKeyUpload = async () => {
+  if (!firestoreKey) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Missing Key File',
+      text: 'Please upload a Firestore key file first.',
+    });
+    return;
+  }
+
+  // Reset audit results
+  setAuditResults({
+    errors: [],
+    warnings: [],
+    good_practices: [],
+  });
+
+  // Show loading spinner using SweetAlert2
+  Swal.fire({
+    title: 'Scanning Firestore...',
+    text: 'Please wait while we scan your Firestore configuration.',
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    },
+  });
+
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch('http://localhost:8000/firebase/firestore-scan', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ firestore_key: firestoreKey }),
+    });
+
+    const data = await response.json();
+    console.log('Backend response:', data);
+
+    // Validate and parse the response
+    if (data.status === 'Scanning completed' && data.findings && typeof data.findings === 'object') {
+      const { danger = [], warning = [], good = [] } = data.findings;
+
+      // Update the state with categorized results
+      setAuditResults({
+        errors: danger,
+        warnings: warning,
+        good_practices: good,
+      });
+
       Swal.fire({
-        icon: 'error',
-        title: 'Scan Failed',
-        text: 'An error occurred while uploading the key. Please try again later.',
+        icon: 'success',
+        title: 'Scan Completed',
+        text: 'Your Firestore scan has been completed successfully!',
+        timer: 2000, // Show for 2 seconds
+      });
+    } else {
+      console.error('Invalid or empty findings:', data.findings);
+      Swal.fire({
+        icon: 'warning',
+        title: 'No Results',
+        text: 'The scan completed, but no valid results were found.',
       });
     }
-  };
+  } catch (error) {
+    console.error('Error uploading key:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Scan Failed',
+      text: 'An error occurred while uploading the key. Please try again later.',
+    });
+  }
+};
 
   const exportToPDF = () => {
     const doc = new jsPDF();

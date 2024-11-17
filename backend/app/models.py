@@ -72,3 +72,11 @@ class FirestoreScanRequest(BaseModel):
 
 class FirebaseHostingScanRequest(BaseModel):
     domain: str
+
+class AnalyticsData(BaseModel):
+    service: str
+    findings_count: int
+    timestamp: datetime
+    good: int
+    warning: int
+    danger: int
