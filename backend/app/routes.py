@@ -10,7 +10,7 @@ from .services import create_user, get_user_by_username, scan_mongo_db_for_risks
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from datetime import datetime, timedelta
 from .auth import get_current_user, create_access_token
 
@@ -130,11 +130,11 @@ async def store_file_upload_record(user_id: str, service: str, findings: dict):
     await reports_collection.insert_one(scan_record)
 
 # Helper function to categorize scan results
-def categorize_results(audit_results):
+def categorize_results(analysis: dict) -> dict:
     return {
-        "danger": [r for r in audit_results if r["category"] == "Danger"],
-        "warning": [r for r in audit_results if r["category"] == "Warning"],
-        "good": [r for r in audit_results if r["category"] == "Good"],
+        "danger": [{"check": "Dangerous Check", "result": message, "category": "Danger"} for message in analysis.get("errors", [])],
+        "warning": [{"check": "Warning Check", "result": message, "category": "Warning"} for message in analysis.get("warnings", [])],
+        "good": [{"check": "Good Practice", "result": message, "category": "Good"} for message in analysis.get("good_practices", [])],
     }
 
 @mongo_scan_router.post("/mongodb")
@@ -186,47 +186,69 @@ async def scan_mongo_db(
     
 # SQL scan endpoint
 @sql_scan_router.post("/upload-sql-file")
-async def upload_sql_file(file: UploadFile = File(...), user_id: str = "example_user_id"):
+async def upload_sql_file(
+    file: UploadFile = File(...), 
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
     if file.content_type != "text/plain":
         raise HTTPException(status_code=400, detail="Only text files are allowed.")
     
     content = await file.read()
     sql_content = content.decode("utf-8")
     
-    # Validate SQL content (Assume validate_sql_script is a function you already have)
-    analysis = validate_sql_script(sql_content)
+    # Validate SQL content
+    try:
+        analysis = validate_sql_script(sql_content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error validating SQL script: {e}")
 
     # Categorize the results
     categorized_results = categorize_results(analysis)
 
-    # Save the upload record in MongoDB
-    await store_file_upload_record(user_id=user_id, service="SQL", findings=categorized_results)
+    # Prepare the ScanResult for saving
+    scan_result = ScanResult(
+        user_uri_id=current_user["id"],
+        service="SQL",
+        findings=categorized_results,
+        timestamp=datetime.now()
+    )
+
+    # Save the ScanResult in MongoDB
+    try:
+        await reports_collection.insert_one(scan_result.dict())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving file upload record: {e}")
 
     return {"analysis": categorized_results}
 
-
 # JSON scan endpoint
+
 @json_scan_router.post("/upload-json-file")
-async def upload_json_file(file: UploadFile = File(...), user_id: str = "example_user_id"):
+async def upload_json_file(
+    file: UploadFile = File(...), 
+    current_user: dict = Depends(get_current_user)
+):
     if file.content_type != "application/json":
         raise HTTPException(status_code=400, detail="Only JSON files are allowed.")
 
     content = await file.read()
     try:
         json_content = content.decode("utf-8")
-        # Assuming validate_json_script is a function to validate JSON content
-        analysis = validate_json_script(json_content)  
+        analysis = validate_json_script(json_content)
     except UnicodeDecodeError:
         raise HTTPException(status_code=400, detail="File is not valid JSON format")
 
     # Categorize the results
     categorized_results = categorize_results(analysis)
 
-    # Save the upload record in MongoDB
-    await store_file_upload_record(user_id=user_id, service="JSON", findings=categorized_results)
+    # Save the upload record in MongoDB with the user ID from the token
+    await store_file_upload_record(
+        user_uri_id=current_user["id"], 
+        service="JSON", 
+        findings=categorized_results  # Now it’s a JSON-serializable dict
+    )
 
     return {"analysis": categorized_results}
-
 
 # Firestore scan endpoint
 @firebase_scan_router.post("/firestore-scan")

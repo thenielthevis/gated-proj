@@ -11,7 +11,10 @@ import {
   CTableHead,
   CTableHeaderCell,
   CTableRow,
+  CButton,
 } from '@coreui/react';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import { Bar, Pie, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, PointElement, LineElement } from 'chart.js';
 
@@ -127,6 +130,19 @@ const Dashboard = () => {
     ],
   };
 
+  // Function to export Analytics Details table as PDF
+  const exportPDF = () => {
+    const input = document.getElementById('analytics-table');
+    html2canvas(input).then((canvas) => {
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF();
+      const imgWidth = pdf.internal.pageSize.getWidth();
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      pdf.save('Analytics_Details.pdf');
+    });
+  };
+
   return (
     <>
       {/* Top Summary Cards */}
@@ -224,10 +240,15 @@ const Dashboard = () => {
         </CCardBody>
       </CCard>
 
-      {/* Analytics Table */}
+      {/* Analytics Table with Export PDF Button */}
       <CCard className="mb-4">
-        <CCardHeader>Analytics Details</CCardHeader>
-        <CCardBody>
+        <CCardHeader>
+          Analytics Details
+          <CButton color="primary" className="float-end" onClick={exportPDF}>
+            Export PDF
+          </CButton>
+        </CCardHeader>
+        <CCardBody id="analytics-table">
           <CTable align="middle" className="mb-0 border" hover responsive>
             <CTableHead>
               <CTableRow>
