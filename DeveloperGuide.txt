@@ -16,7 +16,7 @@ pip freeze > requirements.txt
 
 --------ENV:
 MONGODB:
-DB_URI=mongodb+srv://username:password@clustername.lphgx.mongodb.net/gated?retryWrites=true&w=majority&appName=
+DB_URI=mongodb+srv://username:password@clustername.lphgx.mongodb.net/gated?retryWrites=true&w=majority&~~appName=
 
 SECRET_KEY:
 run the command in terminal: python app/generate_key.py

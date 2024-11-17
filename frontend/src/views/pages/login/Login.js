@@ -32,7 +32,7 @@ const Login = () => {
       })
       localStorage.setItem('token', response.data.access_token)
       localStorage.setItem('role', response.data.role);
-      navigate('/dashboard')  // Redirect to a protected route after successful login
+      navigate('/tools/MongoDB')  // Redirect to a protected route after successful login
     } catch (error) {
       setError(error.response?.data?.detail || 'Login failed')
     }
@@ -87,9 +87,8 @@ const Login = () => {
                 <CCardBody className="text-center">
                   <div>
                     <h2>Sign up</h2>
-                    <p>
-                      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-                      tempor incididunt ut labore et dolore magna aliqua.
+                    <p style={{marginTop:'20px'}}>
+                    Welcome to GATED, a comprehensive system designed to assess the risks and vulnerabilities associated with cloud services and providers.
                     </p>
                     <Link to="/register">
                       <CButton color="primary" className="mt-3" active tabIndex={-1}>

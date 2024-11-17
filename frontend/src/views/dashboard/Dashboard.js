@@ -54,17 +54,15 @@ const Dashboard = () => {
     return <div>Loading...</div>;
   }
 
-  // Calculate total scans from findings_count
+  // Default to 0 if no analytics data is available
   const totalScans = analyticsData.reduce((total, item) => total + (item.findings_count || 0), 0);
 
-  // Determine the most scanned service
-  const mostScannedService = analyticsData.reduce(
+  const mostScannedService = analyticsData.length > 0 ? analyticsData.reduce(
     (max, item) => (item.findings_count > max.findings_count ? item : max),
     { service: '', findings_count: 0 }
-  ).service;
+  ).service : 'N/A';
 
-  // Aggregate the total good, warning, and danger findings
-  const mostFindingsResult = analyticsData.reduce(
+  const mostFindingsResult = analyticsData.length > 0 ? analyticsData.reduce(
     (acc, item) => {
       acc.good += item.good || 0;
       acc.warning += item.warning || 0;
@@ -72,9 +70,8 @@ const Dashboard = () => {
       return acc;
     },
     { good: 0, warning: 0, danger: 0 }
-  );
+  ) : { good: 0, warning: 0, danger: 0 };
 
-  // Prepare data for the pie chart
   const pieChartData = {
     labels: ['Good', 'Warning', 'Danger'],
     datasets: [
@@ -86,13 +83,12 @@ const Dashboard = () => {
     ],
   };
 
-  // Prepare data for the line chart
   const lineChartData = {
     labels: analyticsData.map(item => new Date(item.timestamp).toLocaleDateString()),
     datasets: [
       {
         label: 'Findings Count Over Time',
-        data: analyticsData.map(item => item.findings_count),
+        data: analyticsData.map(item => item.findings_count || 0),
         borderColor: '#36A2EB',
         backgroundColor: 'rgba(54, 162, 235, 0.2)',
         fill: true,
@@ -100,7 +96,6 @@ const Dashboard = () => {
     ],
   };
 
-  // Prepare data for the stacked bar chart (Good, Warning, Danger findings)
   const stackedBarChartData = {
     labels: analyticsData.map(item => item.service),
     datasets: [
@@ -122,7 +117,6 @@ const Dashboard = () => {
     ],
   };
 
-  // Bar chart for Service Scan Count
   const chartData = {
     labels: analyticsData.map(item => item.service),
     datasets: [
@@ -264,13 +258,17 @@ const Dashboard = () => {
               </CTableRow>
             </CTableHead>
             <CTableBody>
-              {analyticsData.map((item, index) => (
+              {analyticsData.length > 0 ? analyticsData.map((item, index) => (
                 <CTableRow key={index}>
                   <CTableDataCell>{item.service}</CTableDataCell>
                   <CTableDataCell>{item.findings_count}</CTableDataCell>
                   <CTableDataCell>{new Date(item.timestamp).toLocaleString()}</CTableDataCell>
                 </CTableRow>
-              ))}
+              )) : (
+                <CTableRow>
+                  <CTableDataCell colSpan={3}>No data available</CTableDataCell>
+                </CTableRow>
+              )}
             </CTableBody>
           </CTable>
         </CCardBody>
