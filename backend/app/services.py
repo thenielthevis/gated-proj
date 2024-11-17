@@ -476,7 +476,8 @@ def check_encryption(firestore_client):
                         })
         
         if sensitive_fields_report:
-            return f"Warning: Sensitive fields found in plain text in collections: {', '.join([f'{item['collection']} (document ID: {item['document_id']}) - {item['sensitive_field']}' for item in sensitive_fields_report])}. Tip: Ensure sensitive data is encrypted or hashed before storage."
+            # return f"Warning: Sensitive fields found in plain text in collections: {', '.join([f'{item['collection']} (document ID: {item['document_id']}) - {item['sensitive_field']}' for item in sensitive_fields_report])}. Tip: Ensure sensitive data is encrypted or hashed before storage."
+            return "Warning: Sensitive fields found in plain text in collections"
         else:
             return "Good: No sensitive fields in plain text found. Sensitive data is handled properly."
     except Exception as e:
@@ -520,7 +521,9 @@ def check_query_performance(firestore_client):
                     })
         
         if missing_indexes:
-            return f"Warning: Missing indexes detected in collections: {', '.join([f'{item['collection']} - {item['error']}' for item in missing_indexes])}. Tip: Create the necessary indexes."
+            # return f"Warning: Missing indexes detected in collections: {', '.join([f'{item['collection']} - {item['error']}' for item in missing_indexes])}. Tip: Create the necessary indexes."
+            return "Warning: Sensitive fields found in plain text in collections"
+
         else:
             return "Good: No missing indexes detected. All queries appear to be optimized."
     except Exception as e:

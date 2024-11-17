@@ -116,7 +116,7 @@ const UserDashboard = () => {
     <>
       <CRow className="mb-4 justify-content-center">
         {/* Summary Cards */}
-        <CCol sm={6} md={3} className="mb-4">
+        <CCol sm={3} md={3} className="mb-3">
           <CCard className="h-100">
             <CCardHeader>Total Scans</CCardHeader>
             <CCardBody>
@@ -125,7 +125,7 @@ const UserDashboard = () => {
           </CCard>
         </CCol>
 
-        <CCol sm={6} md={3} className="mb-4">
+        <CCol sm={3} md={3} className="mb-3">
           <CCard className="h-100">
             <CCardHeader>Most Scanned Service</CCardHeader>
             <CCardBody>
@@ -134,7 +134,7 @@ const UserDashboard = () => {
           </CCard>
         </CCol>
 
-        <CCol sm={6} md={3} className="mb-4">
+        <CCol sm={3} md={3} className="mb-3">
           <CCard className="h-100">
             <CCardHeader>Most Result Findings</CCardHeader>
             <CCardBody>
