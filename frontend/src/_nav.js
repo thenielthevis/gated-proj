@@ -1,4 +1,5 @@
 import React from 'react'
+
 import CIcon from '@coreui/icons-react'
 import {
   cilBell,
@@ -19,6 +20,11 @@ import {
   cilStar,
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
+// Function to handle logout action
+const handleLogout = () => {
+  localStorage.removeItem('token') // Clear the token from local storage
+  window.location.href = '/login'  // Redirect to the login page
+}
 
 const _nav = [
   {
@@ -278,16 +284,17 @@ const _nav = [
       },
     ],
   },
-  // {
-  //   component: CNavGroup,
-  //   name: 'Notifications',
-  //   icon: <CIcon icon={cilBell} customClassName="nav-icon" />,
-  //   items: [
-  //     {
-  //       component: CNavItem,
-  //       name: 'Alerts',
-  //       to: '/notifications/alerts',
-  //     },
+  {
+    component: CNavGroup,
+    name: 'Account',
+    icon: <CIcon icon={cilBell} customClassName="nav-icon" />,
+    items: [
+      {
+        component: CNavItem,
+        name: 'Logout',
+        to: '#',
+        onClick: handleLogout,
+      },
       // {
       //   component: CNavItem,
       //   name: 'Badges',
@@ -302,9 +309,9 @@ const _nav = [
       //   component: CNavItem,
       //   name: 'Toasts',
       //   to: '/notifications/toasts',
-  //     // },
-  //   ],
-  // },
+      // },
+    ],
+  },
   // {
   //   component: CNavItem,
   //   name: 'Widgets',
