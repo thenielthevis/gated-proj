@@ -18,6 +18,8 @@ import {
 import CIcon from '@coreui/icons-react';
 import { cilCheckCircle, cilWarning, cilLoopCircular } from '@coreui/icons';
 import Swal from 'sweetalert2';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const MongoDBScanner = () => {
   const [mongoUri, setMongoUri] = useState('');
@@ -28,7 +30,6 @@ const MongoDBScanner = () => {
     good_practices: [],
   });
 
-  // Handle MongoDB URI input change
   const handleUriChange = (event) => {
     setMongoUri(event.target.value);
   };
@@ -49,7 +50,6 @@ const MongoDBScanner = () => {
       good_practices: [],
     });
 
-    // Show loading spinner
     Swal.fire({
       title: 'Scanning MongoDB...',
       text: 'Please wait while we scan your MongoDB configuration.',
@@ -116,6 +116,70 @@ const MongoDBScanner = () => {
     }
   };
 
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+  
+    // Title
+    doc.setFontSize(16);
+    doc.text('MongoDB Analysis Report', pageWidth / 2, 20, { align: 'center' });
+  
+    // Function to create table data format for each section
+    const createTableData = (title, items) => {
+      if (items.length === 0) {
+        return [[`${title} - No issues detected.`]];
+      }
+      return items.map((item, index) => [
+        `${title} #${index + 1}`,
+        item.check || 'N/A',
+        item.result || 'N/A',
+      ]);
+    };
+  
+    // Data for Danger Table
+    const dangersTableData = createTableData('Danger', auditResults.errors);
+    // Data for Warnings Table
+    const warningsTableData = createTableData('Warning', auditResults.warnings);
+    // Data for Good Practices Table
+    const goodPracticesTableData = createTableData('Good Practice', auditResults.good_practices);
+  
+    // Add tables to PDF
+    const startY = 30; // Initial Y position for the first table
+  
+    // Add Danger table
+    doc.autoTable({
+      startY,
+      head: [['Type', 'Check', 'Description']],
+      body: dangersTableData,
+      theme: 'grid',
+      headStyles: { fillColor: [220, 53, 69], textColor: 255 }, // Red for Danger
+      columnStyles: { 1: { cellWidth: 'auto' }, 2: { cellWidth: 'auto' } }, // Auto wrap
+    });
+  
+    // Add Warning table
+    doc.autoTable({
+      startY: doc.previousAutoTable.finalY + 10,
+      head: [['Type', 'Check', 'Description']],
+      body: warningsTableData,
+      theme: 'grid',
+      headStyles: { fillColor: [255, 193, 7], textColor: 0 }, // Yellow for Warning
+      columnStyles: { 1: { cellWidth: 'auto' }, 2: { cellWidth: 'auto' } },
+    });
+  
+    // Add Good Practices table
+    doc.autoTable({
+      startY: doc.previousAutoTable.finalY + 10,
+      head: [['Type', 'Check', 'Description']],
+      body: goodPracticesTableData,
+      theme: 'grid',
+      headStyles: { fillColor: [40, 167, 69], textColor: 255 }, // Green for Good Practices
+      columnStyles: { 1: { cellWidth: 'auto' }, 2: { cellWidth: 'auto' } },
+    });
+  
+    // Save the PDF
+    doc.save('MongoDB_Analysis_Report.pdf');
+  };  
+
   return (
     <>
       <CCallout color="primary">
@@ -136,10 +200,13 @@ const MongoDBScanner = () => {
           <CButton color="primary" onClick={handleUriUpload}>
             Scan
           </CButton>
+          <CButton color="secondary" onClick={exportToPDF} style={{ marginLeft: '10px' }}>
+          Export to PDF
+        </CButton>
         </CCardBody>
       </CCard>
 
-      <CCard className="p-0">
+      <CCard className="p-0" style={{ marginBottom: '30px' }}>
         <CCardHeader>Scan Results</CCardHeader>
         <CTabs
           activeItemKey={activeTab}
@@ -158,7 +225,6 @@ const MongoDBScanner = () => {
             </CTab>
           </CTabList>
           <CTabContent>
-            {/* Danger Tab */}
             <CTabPanel className="p-3" itemKey={0}>
               {auditResults.errors.length > 0 ? (
                 <CAccordion activeItemKey={1}>
@@ -179,7 +245,6 @@ const MongoDBScanner = () => {
               )}
             </CTabPanel>
 
-            {/* Warnings Tab */}
             <CTabPanel className="p-3" itemKey={1}>
               {auditResults.warnings.length > 0 ? (
                 <CAccordion activeItemKey={1}>
@@ -200,7 +265,6 @@ const MongoDBScanner = () => {
               )}
             </CTabPanel>
 
-            {/* Good Practices Tab */}
             <CTabPanel className="p-3" itemKey={2}>
               {auditResults.good_practices.length > 0 ? (
                 <CAccordion activeItemKey={1}>

@@ -108,11 +108,11 @@ def check_authentication(mongo_uri):
         server_info = client.server_info()
         if server_info:
             if 'authentication' not in server_info:
-                return "Authentication Check Result: Warning: Authentication is not enabled. Tip: Enable authentication for secure access control."
+                return "Warning: Authentication is not enabled. Tip: Enable authentication for secure access control."
             else:
-                return "Authentication Check Result: Authentication is enabled."
+                return "Authentication is enabled."
         else:
-            return "Authentication Check Result: Could not connect to MongoDB to retrieve server info."
+            return "Could not connect to MongoDB to retrieve server info."
     except Exception as e:
         return f"Error: {str(e)}"
 
@@ -121,9 +121,9 @@ def check_ip_binding(mongo_uri):
         client = pymongo.MongoClient(mongo_uri)
         server_info = client.server_info()
         if 'bind_ip' in server_info and server_info['bind_ip'] == "0.0.0.0":
-            return "IP Binding Check Result: Warning: MongoDB is listening on all IPs (0.0.0.0). Tip: Restrict binding to trusted IPs or localhost to prevent unauthorized access."
+            return "Warning: MongoDB is listening on all IPs (0.0.0.0). Tip: Restrict binding to trusted IPs or localhost to prevent unauthorized access."
         else:
-            return "IP Binding Check Result: MongoDB bind IP configuration looks good."
+            return "MongoDB bind IP configuration looks good."
     except Exception as e:
         return f"Error: {str(e)}"
 
@@ -137,14 +137,14 @@ def check_user_roles(mongo_uri):
             if "root" in [role["role"] for role in user.get("roles", [])]:
                 risky_users.append(user["user"])
         if risky_users:
-            return f"User Roles Check Result: Warning: Users with 'root' roles detected: {', '.join(risky_users)}. Tip: Limit root access and ensure roles are appropriately assigned."
+            return f"Warning: Users with 'root' roles detected: {', '.join(risky_users)}. Tip: Limit root access and ensure roles are appropriately assigned."
         else:
-            return "User Roles Check Result: No users with excessive privileges detected."
+            return "No users with excessive privileges detected."
     except pymongo.errors.OperationFailure as e:
         if "not authorized" in str(e):
-            return "User Roles Check Result: Error: Insufficient privileges to retrieve user roles."
+            return "Error: Insufficient privileges to retrieve user roles."
         else:
-            return f"User Roles Check Result: Operation error: {str(e)}"
+            return f"Operation error: {str(e)}"
     except Exception as e:
         return f"Error: {str(e)}"
 
@@ -153,18 +153,18 @@ def check_encryption(mongo_uri):
         client = pymongo.MongoClient(mongo_uri)
         server_info = client.server_info()
         if 'tls' in server_info and server_info['tls'] == 'enabled':
-            return "Encryption Check Result: Encryption (TLS) is enabled for MongoDB."
+            return "Encryption (TLS) is enabled for MongoDB."
         else:
-            return "Encryption Check Result: Warning: MongoDB is not using encryption (TLS). Tip: Enable TLS encryption to secure data in transit."
+            return "Warning: MongoDB is not using encryption (TLS). Tip: Enable TLS encryption to secure data in transit."
     except Exception as e:
         return f"Error: {str(e)}"
 
 def check_default_port(mongo_uri):
     try:
         if '27017' in mongo_uri:
-            return "Port Check Result: Warning: MongoDB is using the default port (27017). Tip: Consider changing the default port to a non-standard port for security."
+            return "Warning: MongoDB is using the default port (27017). Tip: Consider changing the default port to a non-standard port for security."
         else:
-            return "Port Check Result: MongoDB is not using the default port."
+            return "MongoDB is not using the default port."
     except Exception as e:
         return f"Error: {str(e)}"
 
@@ -173,9 +173,9 @@ def check_logging(mongo_uri):
         client = pymongo.MongoClient(mongo_uri)
         server_info = client.server_info()
         if 'log' in server_info and server_info['log'] == "disabled":
-            return "Logging Check Result: Warning: MongoDB logging is disabled. Tip: Enable logging to monitor access and actions in the database."
+            return "MongoDB logging is disabled. Tip: Enable logging to monitor access and actions in the database."
         else:
-            return "Logging Check Result: MongoDB logging is enabled."
+            return "MongoDB logging is enabled."
     except Exception as e:
         return f"Error: {str(e)}"
 
@@ -205,9 +205,9 @@ def check_empty_fields(mongo_uri):
                             "empty_fields": empty_fields
                         })
         if empty_fields_report:
-            return f"Empty Fields Check Result: Warning: Documents with empty fields found: {empty_fields_report}. Tip: Clean up documents to avoid empty fields in critical data."
+            return f"Warning: Documents with empty fields found: {empty_fields_report}. Tip: Clean up documents to avoid empty fields in critical data."
         else:
-            return "Empty Fields Check Result: No empty fields detected in any document."
+            return "No empty fields detected in any document."
     except Exception as e:
         return f"Error: {str(e)}"
 
@@ -225,11 +225,11 @@ def check_password_hash(mongo_uri):
                 insecure_passwords.append(user["username"])
 
         if insecure_passwords:
-            return f"Password Hash Check Result: Warning: The following users may have unsecure passwords: {', '.join(insecure_passwords)}. Tip: Use secure password hashing algorithms (e.g., bcrypt, scrypt)."
+            return f"Warning: The following users may have unsecure passwords: {', '.join(insecure_passwords)}. Tip: Use secure password hashing algorithms (e.g., bcrypt, scrypt)."
         else:
-            return "Password Hash Check Result: All user passwords appear to be hashed."
+            return "All user passwords appear to be hashed."
     except pymongo.errors.OperationFailure as e:
-        return "Password Security Check Result: Error: Insufficient privileges to check user passwords."
+        return "Error: Insufficient privileges to check user passwords."
     except Exception as e:
         return f"Error: {str(e)}"
 
