@@ -12,7 +12,7 @@ from pymongo.errors import ConnectionFailure
 from bson import ObjectId
 from fastapi import HTTPException
 from dotenv import load_dotenv
-from .models import UserInDB, FileUploadRecord
+from .models import UserInDB, FileUploadRecord, Finding
 from datetime import datetime
 from typing import List, Optional, Dict, Any, Tuple
 from cryptography.fernet import Fernet
@@ -551,17 +551,16 @@ def check_data_redundancy(firestore_client):
         return f"Error: {str(e)}"
 
 # Categorize Results
-def categorize_result(message: str) -> str:
+def categorize_results(analysis: dict) -> Dict[str, List[Finding]]:
     """
-    Categorize scan results into Danger, Warning, or Good.
+    Categorizes analysis results into danger, warning, and good practices.
+    Returns a dictionary of categorized Finding instances.
     """
-    if "Error" in message:
-        return "Danger"
-    elif "Warning" in message:
-        return "Warning"
-    else:
-        return "Good"
-    
+    return {
+        "danger": [Finding(check="Dangerous Check", result=message, category="Danger") for message in analysis.get("errors", [])],
+        "warning": [Finding(check="Warning Check", result=message, category="Warning") for message in analysis.get("warnings", [])],
+        "good": [Finding(check="Good Practice", result=message, category="Good") for message in analysis.get("good_practices", [])],
+    }
 # Full scan function
 def scan_firestore_for_risks(service_account_key: str) -> Dict[str, Any]:
     try:

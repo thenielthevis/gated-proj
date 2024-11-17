@@ -128,11 +128,11 @@ async def store_file_upload_record(user_id: str, service: str, findings: dict):
     await reports_collection.insert_one(scan_record)
 
 # Helper function to categorize scan results
-def categorize_results(audit_results):
+def categorize_results(analysis: dict) -> dict:
     return {
-        "danger": [r for r in audit_results if r["category"] == "Danger"],
-        "warning": [r for r in audit_results if r["category"] == "Warning"],
-        "good": [r for r in audit_results if r["category"] == "Good"],
+        "danger": [Finding(check="Dangerous Check", result=message, category="Danger") for message in analysis.get("errors", [])],
+        "warning": [Finding(check="Warning Check", result=message, category="Warning") for message in analysis.get("warnings", [])],
+        "good": [Finding(check="Good Practice", result=message, category="Good") for message in analysis.get("good_practices", [])],
     }
 
 @mongo_scan_router.post("/mongodb")
@@ -184,24 +184,40 @@ async def scan_mongo_db(
     
 # SQL scan endpoint
 @sql_scan_router.post("/upload-sql-file")
-async def upload_sql_file(file: UploadFile = File(...), user_id: str = "example_user_id"):
+async def upload_sql_file(
+    file: UploadFile = File(...), 
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
     if file.content_type != "text/plain":
         raise HTTPException(status_code=400, detail="Only text files are allowed.")
     
     content = await file.read()
     sql_content = content.decode("utf-8")
     
-    # Validate SQL content (Assume validate_sql_script is a function you already have)
-    analysis = validate_sql_script(sql_content)
+    # Validate SQL content
+    try:
+        analysis = validate_sql_script(sql_content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error validating SQL script: {e}")
 
     # Categorize the results
     categorized_results = categorize_results(analysis)
 
-    # Save the upload record in MongoDB
-    await store_file_upload_record(user_id=user_id, service="SQL", findings=categorized_results)
+    # Prepare the ScanResult for saving
+    scan_result = ScanResult(
+        user_uri_id=current_user["id"],
+        service="SQL",
+        findings=categorized_results,
+        timestamp=datetime.now()
+    )
+
+    # Save the ScanResult in MongoDB
+    try:
+        await reports_collection.insert_one(scan_result.dict())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving file upload record: {e}")
 
     return {"analysis": categorized_results}
-
 
 # JSON scan endpoint
 @json_scan_router.post("/upload-json-file")
