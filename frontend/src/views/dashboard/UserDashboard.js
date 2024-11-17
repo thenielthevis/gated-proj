@@ -44,25 +44,29 @@ const UserDashboard = () => {
     return <div>Loading...</div>;
   }
 
-  // Calculate total scans from findings_count
-  const totalScans = analyticsData.reduce((total, item) => total + (item.findings_count || 0), 0);
+  // If no data is available, default to zero values
+  const totalScans = analyticsData.length > 0
+    ? analyticsData.reduce((total, item) => total + (item.findings_count || 0), 0)
+    : 0;
 
-  // Determine the most scanned service
-  const mostScannedService = analyticsData.reduce(
-    (max, item) => (item.findings_count > max.findings_count ? item : max),
-    { service: '', findings_count: 0 }
-  ).service;
+  const mostScannedService = analyticsData.length > 0
+    ? analyticsData.reduce(
+        (max, item) => (item.findings_count > max.findings_count ? item : max),
+        { service: '', findings_count: 0 }
+      ).service
+    : 'None';
 
-  // Aggregate the total good, warning, and danger findings
-  const mostFindingsResult = analyticsData.reduce(
-    (acc, item) => {
-      acc.good += item.good || 0;
-      acc.warning += item.warning || 0;
-      acc.danger += item.danger || 0;
-      return acc;
-    },
-    { good: 0, warning: 0, danger: 0 }
-  );
+  const mostFindingsResult = analyticsData.length > 0
+    ? analyticsData.reduce(
+        (acc, item) => {
+          acc.good += item.good || 0;
+          acc.warning += item.warning || 0;
+          acc.danger += item.danger || 0;
+          return acc;
+        },
+        { good: 0, warning: 0, danger: 0 }
+      )
+    : { good: 0, warning: 0, danger: 0 };
 
   // Prepare data for the pie chart
   const pieChartData = {
@@ -78,11 +82,11 @@ const UserDashboard = () => {
 
   // Prepare data for the line chart
   const lineChartData = {
-    labels: analyticsData.map((item) => new Date(item.timestamp).toLocaleDateString()),
+    labels: analyticsData.length > 0 ? analyticsData.map((item) => new Date(item.timestamp).toLocaleDateString()) : ['No Data'],
     datasets: [
       {
         label: 'Findings Count Over Time',
-        data: analyticsData.map((item) => item.findings_count),
+        data: analyticsData.length > 0 ? analyticsData.map((item) => item.findings_count) : [0],
         borderColor: '#36A2EB',
         backgroundColor: 'rgba(54, 162, 235, 0.2)',
         fill: true,
@@ -92,21 +96,21 @@ const UserDashboard = () => {
 
   // Prepare data for the stacked bar chart
   const stackedBarChartData = {
-    labels: analyticsData.map((item) => item.service),
+    labels: analyticsData.length > 0 ? analyticsData.map((item) => item.service) : ['No Data'],
     datasets: [
       {
         label: 'Good Findings',
-        data: analyticsData.map((item) => item.good || 0),
+        data: analyticsData.length > 0 ? analyticsData.map((item) => item.good || 0) : [0],
         backgroundColor: '#36A2EB',
       },
       {
         label: 'Warning Findings',
-        data: analyticsData.map((item) => item.warning || 0),
+        data: analyticsData.length > 0 ? analyticsData.map((item) => item.warning || 0) : [0],
         backgroundColor: '#FFCD56',
       },
       {
         label: 'Danger Findings',
-        data: analyticsData.map((item) => item.danger || 0),
+        data: analyticsData.length > 0 ? analyticsData.map((item) => item.danger || 0) : [0],
         backgroundColor: '#FF6384',
       },
     ],
@@ -145,49 +149,50 @@ const UserDashboard = () => {
           </CCard>
         </CCol>
       </CRow>
-        {/* Pie Chart and Line Chart in a Single Row */}
-        <CRow className="mb-4">
-          {/* Pie Chart */}
-          <CCol sm={6} md={6}>
-            <CCard className="mb-4 h-100">
-              <CCardHeader>Findings Distribution</CCardHeader>
-              <CCardBody
-                className="d-flex align-items-center justify-content-center"
-                style={{ width: '100%', height: '400px' }}
-              >
-                <Pie data={pieChartData} options={{ responsive: true }} />
-              </CCardBody>
-            </CCard>
-          </CCol>
 
-          {/* Line Chart */}
-          <CCol sm={6} md={6}>
-            <CCard className="mb-4 h-100">
-              <CCardHeader>Findings Over Time</CCardHeader>
-              <CCardBody
-                className="d-flex align-items-center justify-content-center"
-                style={{ width: '100%', height: '400px' }}
-              >
-                <Line data={lineChartData} options={{ responsive: true }} />
-              </CCardBody>
-            </CCard>
-          </CCol>
-        </CRow>
+      {/* Pie Chart and Line Chart in a Single Row */}
+      <CRow className="mb-4">
+        {/* Pie Chart */}
+        <CCol sm={6} md={6}>
+          <CCard className="mb-4 h-100">
+            <CCardHeader>Findings Distribution</CCardHeader>
+            <CCardBody
+              className="d-flex align-items-center justify-content-center"
+              style={{ width: '100%', height: '400px' }}
+            >
+              <Pie data={pieChartData} options={{ responsive: true }} />
+            </CCardBody>
+          </CCard>
+        </CCol>
 
-        {/* Stacked Bar Chart */}
-        <CRow style={{ marginBottom: '20px' }}>
-          <CCol sm={12}>
-            <CCard>
-              <CCardHeader>Findings Breakdown by Service</CCardHeader>
-              <CCardBody
-                className="d-flex align-items-center justify-content-center"
-                style={{ width: '100%', height: '500px' }}
-              >
-                <Bar data={stackedBarChartData} options={{ responsive: true, stacked: true }} />
-              </CCardBody>
-            </CCard>
-          </CCol>
-        </CRow>
+        {/* Line Chart */}
+        <CCol sm={6} md={6}>
+          <CCard className="mb-4 h-100">
+            <CCardHeader>Findings Over Time</CCardHeader>
+            <CCardBody
+              className="d-flex align-items-center justify-content-center"
+              style={{ width: '100%', height: '400px' }}
+            >
+              <Line data={lineChartData} options={{ responsive: true }} />
+            </CCardBody>
+          </CCard>
+        </CCol>
+      </CRow>
+
+      {/* Stacked Bar Chart */}
+      <CRow style={{ marginBottom: '20px' }}>
+        <CCol sm={12}>
+          <CCard>
+            <CCardHeader>Findings Breakdown by Service</CCardHeader>
+            <CCardBody
+              className="d-flex align-items-center justify-content-center"
+              style={{ width: '100%', height: '500px' }}
+            >
+              <Bar data={stackedBarChartData} options={{ responsive: true, stacked: true }} />
+            </CCardBody>
+          </CCard>
+        </CCol>
+      </CRow>
     </>
   );
 };

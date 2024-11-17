@@ -100,170 +100,80 @@ const _nav = [
     to: '/', // Change path
     icon: <CIcon icon={cilFile} customClassName="nav-icon" />,
   },
-  {
-    component: CNavTitle,
-    name: 'Educational Materials',
-  },
-  {
-    component: CNavGroup,
-    name: 'SQL',
-    to: '/base',
-    icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
-    items: [
+  ...(localStorage.getItem('role') === 'user'
+  ? [
       {
-        component: CNavItem,
-        name: 'About SQL',
-        to: '/base/accordion',
+        component: CNavTitle,
+        name: 'Educational Materials',
       },
       {
-        component: CNavItem,
-        name: 'Good Practices',
-        to: '/base/breadcrumbs',
+        component: CNavGroup,
+        name: 'SQL',
+        to: '/base',
+        icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
+        items: [
+          {
+            component: CNavItem,
+            name: 'About SQL',
+            to: '/base/accordion',
+          },
+          {
+            component: CNavItem,
+            name: 'Good Practices',
+            to: '/base/breadcrumbs',
+          },
+          {
+            component: CNavItem,
+            name: 'Mistakes to Avoid',
+            to: '/base/cards',
+          },
+        ],
       },
       {
-        component: CNavItem,
-        name: 'Mistakes to Avoid',
-        to: '/base/cards',
-      },
-      // {
-      //   component: CNavItem,
-      //   name: 'Carousel',
-      //   to: '/base/carousels',
-      // },
-      // {
-      //   component: CNavItem,
-      //   name: 'Collapse',
-      //   to: '/base/collapses',
-      // },
-      // {
-      //   component: CNavItem,
-      //   name: 'List group',
-      //   to: '/base/list-groups',
-      // },
-      // {
-      //   component: CNavItem,
-      //   name: 'Navs & Tabs',
-      //   to: '/base/navs',
-      // },
-      // {
-      //   component: CNavItem,
-      //   name: 'Pagination',
-      //   to: '/base/paginations',
-      // },
-      // {
-      //   component: CNavItem,
-      //   name: 'Placeholders',
-      //   to: '/base/placeholders',
-      // },
-      // {
-      //   component: CNavItem,
-      //   name: 'Popovers',
-      //   to: '/base/popovers',
-      // },
-      // {
-      //   component: CNavItem,
-      //   name: 'Progress',
-      //   to: '/base/progress',
-      // },
-      // {
-      //   component: CNavItem,
-      //   name: 'Spinners',
-      //   to: '/base/spinners',
-      // },
-      // {
-      //   component: CNavItem,
-      //   name: 'Tables',
-      //   to: '/base/tables',
-      // },
-      // {
-      //   component: CNavItem,
-      //   name: 'Tabs',
-      //   to: '/base/tabs',
-      // },
-      // {
-      //   component: CNavItem,
-      //   name: 'Tooltips',
-      //   to: '/base/tooltips',
-      // },
-    ],
-  },
-  {
-    component: CNavGroup,
-    name: 'JSON',
-    to: '/buttons',
-    icon: <CIcon icon={cilCursor} customClassName="nav-icon" />,
-    items: [
-      {
-        component: CNavItem,
-        name: 'About JSON',
-        to: '/buttons/buttons',
+        component: CNavGroup,
+        name: 'JSON',
+        to: '/buttons',
+        icon: <CIcon icon={cilCursor} customClassName="nav-icon" />,
+        items: [
+          {
+            component: CNavItem,
+            name: 'About JSON',
+            to: '/buttons/buttons',
+          },
+          {
+            component: CNavItem,
+            name: 'Good Practices',
+            to: '/buttons/button-groups',
+          },
+          {
+            component: CNavItem,
+            name: 'Mistakes to Avoid',
+            to: '/buttons/dropdowns',
+          },
+        ],
       },
       {
-        component: CNavItem,
-        name: 'Good Practices',
-        to: '/buttons/button-groups',
+        component: CNavGroup,
+        name: 'MongoDB',
+        icon: <CIcon icon={cilNotes} customClassName="nav-icon" />,
+        items: [
+          {
+            component: CNavItem,
+            name: 'What is NoSQL?',
+            to: '/forms/form-control',
+          },
+          {
+            component: CNavItem,
+            name: 'Common Risks',
+            to: '/forms/select',
+          },
+          {
+            component: CNavItem,
+            name: 'Good Practices',
+            to: '/forms/checks-radios',
+          },
+        ],
       },
-      {
-        component: CNavItem,
-        name: 'Mistakes to Avoid',
-        to: '/buttons/dropdowns',
-      },
-    ],
-  },
-  {
-    component: CNavGroup,
-    name: 'MongoDB',
-    icon: <CIcon icon={cilNotes} customClassName="nav-icon" />,
-    items: [
-      {
-        component: CNavItem,
-        name: 'What is NoSQL?',
-        to: '/forms/form-control',
-      },
-      {
-        component: CNavItem,
-        name: 'Common Risks',
-        to: '/forms/select',
-      },
-      {
-        component: CNavItem,
-        name: 'Good Practices',
-        to: '/forms/checks-radios',
-      },
-    //   {
-    //     component: CNavItem,
-    //     name: 'Range',
-    //     to: '/forms/range',
-    //   },
-    //   {
-    //     component: CNavItem,
-    //     name: 'Input Group',
-    //     to: '/forms/input-group',
-    //   },
-    //   {
-    //     component: CNavItem,
-    //     name: 'Floating Labels',
-    //     to: '/forms/floating-labels',
-    //   },
-    //   {
-    //     component: CNavItem,
-    //     name: 'Layout',
-    //     to: '/forms/layout',
-    //   },
-    //   {
-    //     component: CNavItem,
-    //     name: 'Validation',
-    //     to: '/forms/validation',
-    //   },
-  //   ],
-  // },
-  // {
-  //   component: CNavItem,
-  //   name: 'Firebase',
-  //   to: '/charts',
-  //   icon: <CIcon icon={cilChartPie} customClassName="nav-icon" />,
-  // },
-  ]},
   {
     component: CNavGroup,
     name: 'Firebase',
@@ -290,6 +200,8 @@ const _nav = [
       },
     ],
   },
+  ]
+  : []),
   {
     component: CNavTitle,
     name: 'Profile',
