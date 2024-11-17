@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 import {
   CButton,
   CCard,
@@ -14,21 +14,23 @@ import {
   CTabList,
   CTab,
   CCallout,
-} from '@coreui/react'
-import CIcon from '@coreui/icons-react'
-import { cilCheckCircle, cilLoopCircular, cilWarning } from '@coreui/icons'
-import { jsPDF } from 'jspdf' // Import jsPDF for PDF export
-import 'jspdf-autotable'
+} from '@coreui/react';
+import CIcon from '@coreui/icons-react';
+import { cilCheckCircle, cilLoopCircular, cilWarning } from '@coreui/icons';
+import { jsPDF } from 'jspdf'; // Import jsPDF for PDF export
+import 'jspdf-autotable';
 import Swal from 'sweetalert2';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const SQLScript = () => {
-  const [file, setFile] = useState(null)
-  const [activeTab, setActiveTab] = useState(0)
-  const [analysisResults, setAnalysisResults] = useState(null)
+  const [file, setFile] = useState(null);
+  const [activeTab, setActiveTab] = useState(0);
+  const [analysisResults, setAnalysisResults] = useState(null);
 
   const handleFileChange = (event) => {
-    setFile(event.target.files[0])
-  }
+    setFile(event.target.files[0]);
+  };
 
   const handleFileUpload = async () => {
     if (!file) {
@@ -40,8 +42,8 @@ const SQLScript = () => {
       return;
     }
 
-    const formData = new FormData()
-    formData.append('file', file)
+    const formData = new FormData();
+    formData.append('file', file);
 
     try {
       Swal.fire({
@@ -56,10 +58,10 @@ const SQLScript = () => {
       const response = await fetch('http://localhost:8000/sql/upload-sql-file', {
         method: 'POST',
         body: formData,
-      })
+      });
 
-      const data = await response.json()
-      setAnalysisResults(data.analysis)
+      const data = await response.json();
+      setAnalysisResults(data.analysis);
 
       Swal.fire({
         icon: 'success',
@@ -68,36 +70,38 @@ const SQLScript = () => {
         timer: 2000,
       });
 
+      toast.success('SQL script scanning is complete!'); // Trigger toast notification
+
     } catch (error) {
-      console.error('Error uploading file:', error)
+      console.error('Error uploading file:', error);
     }
-  }
+  };
 
   const exportToPDF = () => {
-    const doc = new jsPDF()
-    const pageWidth = doc.internal.pageSize.getWidth()
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
 
     // Title
-    doc.setFontSize(16)
-    doc.text('SQL Script Analysis Report', pageWidth / 2, 20, { align: 'center' })
+    doc.setFontSize(16);
+    doc.text('SQL Script Analysis Report', pageWidth / 2, 20, { align: 'center' });
 
     // Function to create table data format for each section
     const createTableData = (title, items) => {
       if (items.length === 0) {
-        return [[`${title} - No issues detected.`]]
+        return [[`${title} - No issues detected.`]];
       }
-      return items.map((item, index) => [`${title} #${index + 1}`, item])
-    }
+      return items.map((item, index) => [`${title} #${index + 1}`, item]);
+    };
     // Data for Dangers Table
-    const dangersTableData = createTableData('Danger', analysisResults.errors)
+    const dangersTableData = createTableData('Danger', analysisResults.errors);
     // Data for Warnings Table
-    const warningsTableData = createTableData('Warning', analysisResults.warnings)
+    const warningsTableData = createTableData('Warning', analysisResults.warnings);
 
     // Data for Good Practices Table
-    const goodPracticesTableData = createTableData('Good Practice', analysisResults.good_practices)
+    const goodPracticesTableData = createTableData('Good Practice', analysisResults.good_practices);
 
     // Add tables to PDF
-    const startY = 30 // Initial Y position for the first table
+    const startY = 30; // Initial Y position for the first table
 
     // Add Danger table
     doc.autoTable({
@@ -107,7 +111,7 @@ const SQLScript = () => {
       theme: 'grid',
       headStyles: { fillColor: [220, 53, 69], textColor: 255 }, // Red for Danger
       columnStyles: { 1: { cellWidth: 'auto' } }, // Auto wrap
-    })
+    });
 
     // Add Warning table
     doc.autoTable({
@@ -117,7 +121,7 @@ const SQLScript = () => {
       theme: 'grid',
       headStyles: { fillColor: [255, 193, 7], textColor: 0 }, // Yellow for Warning
       columnStyles: { 1: { cellWidth: 'auto' } },
-    })
+    });
 
     // Add Good Practices table
     doc.autoTable({
@@ -127,14 +131,18 @@ const SQLScript = () => {
       theme: 'grid',
       headStyles: { fillColor: [40, 167, 69], textColor: 255 }, // Green for Good Practices
       columnStyles: { 1: { cellWidth: 'auto' } },
-    })
+    });
 
     // Save the PDF
     doc.save('SQL_Script_Analysis_Report.pdf');
-  }
+
+    toast.success('PDF export is complete!'); // Trigger toast notification
+  };
 
   return (
     <>
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+
       <CCallout color="primary">
         <h6 className="font-w-500">Notice!</h6>
         This SQL Script scanning procedure may take fewer moments to finish than the MongoDB. Please ensure the file contains valid SQL commands, as JSON format is not allowed. Enjoy using this feature while it's still free! - Gated Programming Team
@@ -233,7 +241,7 @@ const SQLScript = () => {
 
       {/* Educational Materials Section */}
       {analysisResults && (
-        <CCard className="mt-4" style={{marginBottom: '30px'}}>
+        <CCard className="mt-4" style={{ marginBottom: '30px' }}>
           <CCardBody>
             <h5>Educational Materials</h5>
             <h6>Learn how to mitigate these risks now before it's too late!</h6>
@@ -276,7 +284,8 @@ const SQLScript = () => {
         </CCard>
       )}
     </>
-  )
-}
+  );
+};
 
-export default SQLScript
+export default SQLScript;
+

@@ -288,21 +288,21 @@ const _nav = [
   //       name: 'Alerts',
   //       to: '/notifications/alerts',
   //     },
-  //     {
-  //       component: CNavItem,
-  //       name: 'Badges',
-  //       to: '/notifications/badges',
-  //     },
-  //     {
-  //       component: CNavItem,
-  //       name: 'Modal',
-  //       to: '/notifications/modals',
-  //     },
-  //     {
-  //       component: CNavItem,
-  //       name: 'Toasts',
-  //       to: '/notifications/toasts',
-  //     },
+      // {
+      //   component: CNavItem,
+      //   name: 'Badges',
+      //   to: '/notifications/badges',
+      // },
+      // {
+      //   component: CNavItem,
+      //   name: 'Modal',
+      //   to: '/notifications/modals',
+      // },
+      // {
+      //   component: CNavItem,
+      //   name: 'Toasts',
+      //   to: '/notifications/toasts',
+  //     // },
   //   ],
   // },
   // {
