@@ -5,7 +5,7 @@ from fastapi import UploadFile, File, APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
 from passlib.context import CryptContext
 from cryptography.fernet import Fernet
-from .models import User, UserInDB, MongoDBRequest, FileUploadRecord, FirestoreScanRequest, FirebaseHostingScanRequest
+from .models import User, UserInDB, MongoDBRequest, FileUploadRecord, FirestoreScanRequest, FirebaseHostingScanRequest, ScanResult, Finding
 from .services import create_user, get_user_by_username, scan_mongo_db_for_risks, validate_sql_script, validate_json_script, store_file_upload_record, scan_firestore_for_risks, scan_firebase_hosting, is_valid_firebase_domain
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
@@ -17,7 +17,7 @@ from .auth import get_current_user, create_access_token
 env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
 load_dotenv(env_path)
 
-MONGO_URI = os.getenv("MONGO_URI")
+MONGO_URI = os.getenv("DB_URI")
 DATABASE_NAME = "gated"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
 
@@ -123,13 +123,10 @@ async def scan_mongo_db(
     request: MongoDBRequest, 
     current_user: Dict[str, Any] = Depends(get_current_user)
 ):
-    """
-    Scans the MongoDB URI and saves the findings to the database.
-    """
     try:
         # Extract MongoDB URI and user information
         mongo_uri = request.mongodb_uri
-        user_id = current_user["id"]  # Assuming `_id` is the unique identifier for the user
+        user_id = current_user["id"]
 
         if not mongo_uri:
             raise ValueError("MongoDB URI is required")
@@ -144,28 +141,24 @@ async def scan_mongo_db(
             "good": [r for r in scan_result["audit_results"] if r["category"] == "Good"],
         }
 
-        # Create database record
-        record = {
-            "user_id": str(user_id),  # Convert ObjectId to string
-            "uri": mongo_uri,
-            "findings": categorized_results,
-            "timestamp": datetime.now(),
-        }
+        # Create the scan result with service name 'MONGODB'
+        record = ScanResult(
+            user_uri_id=str(user_id),
+            service="MongoDB",
+            findings=categorized_results,
+            timestamp=datetime.now(),
+        )
 
-        # Save the record to the reports collection
-        result = await reports_collection.insert_one(record)
-        
-        # Log the result to ensure it was inserted
-        if result.inserted_id:
-            print(f"Document inserted with ID: {result.inserted_id}")
-        else:
-            print(f"Failed to insert document: {result}")
+        # Insert the record into the 'reports' collection
+        result = await db.reports.insert_one(record.dict())
 
-        # Return the categorized results
+        if not result.inserted_id:
+            raise HTTPException(status_code=500, detail="Failed to save scan results")
+
         return {
             "status": "Scanning completed",
             "findings": categorized_results,
-            "message": "Scan results saved successfully",
+            "message": "Scan results saved successfully"
         }
 
     except Exception as e:

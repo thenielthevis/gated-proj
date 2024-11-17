@@ -37,14 +37,21 @@ class UserURI(BaseModel):
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}
 
+class Finding(BaseModel):
+    check: str
+    result: str
+    category: str
+
 class ScanResult(BaseModel):
-    user_uri_id: str
-    findings: List[str]
+    user_uri_id: str  # Update this to match the field being passed
+    service: str
+    findings: Dict[str, List[Finding]]  # Keeping the structured findings field
     timestamp: datetime = datetime.now()
 
     class Config:
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}
+
 
 class MongoDBRequest(BaseModel):
     mongodb_uri: str
