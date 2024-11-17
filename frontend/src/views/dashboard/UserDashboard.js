@@ -5,9 +5,18 @@ import {
   CCardHeader,
   CCol,
   CRow,
+  CButton,
+  CTable,
+  CTableHead,
+  CTableRow,
+  CTableHeaderCell,
+  CTableBody,
+  CTableDataCell
 } from '@coreui/react';
+import { jsPDF } from 'jspdf';
 import { Pie, Bar, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, PointElement, LineElement } from 'chart.js';
+import html2canvas from 'html2canvas';
 
 ChartJS.register(
   CategoryScale,
@@ -116,6 +125,18 @@ const UserDashboard = () => {
     ],
   };
 
+    const exportPDF = () => {
+      const input = document.getElementById('analytics-table');
+      html2canvas(input).then((canvas) => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF();
+        const imgWidth = pdf.internal.pageSize.getWidth();
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        pdf.save('Analytics_Details.pdf');
+      });
+    };
+
   return (
     <>
       <CRow className="mb-4 justify-content-center">
@@ -193,6 +214,40 @@ const UserDashboard = () => {
           </CCard>
         </CCol>
       </CRow>
+
+      {/* Analytics Table with Export PDF Button */}
+      <CCard className="mb-4">
+        <CCardHeader>
+          Analytics Details
+          <CButton color="primary" className="float-end" onClick={exportPDF}>
+            Export PDF
+          </CButton>
+        </CCardHeader>
+        <CCardBody id="analytics-table">
+          <CTable align="middle" className="mb-0 border" hover responsive>
+            <CTableHead>
+              <CTableRow>
+                <CTableHeaderCell>Service</CTableHeaderCell>
+                <CTableHeaderCell>Scan Count</CTableHeaderCell>
+                <CTableHeaderCell>Latest Timestamp</CTableHeaderCell>
+              </CTableRow>
+            </CTableHead>
+            <CTableBody>
+              {analyticsData.length > 0 ? analyticsData.map((item, index) => (
+                <CTableRow key={index}>
+                  <CTableDataCell>{item.service}</CTableDataCell>
+                  <CTableDataCell>{item.findings_count}</CTableDataCell>
+                  <CTableDataCell>{new Date(item.timestamp).toLocaleString()}</CTableDataCell>
+                </CTableRow>
+              )) : (
+                <CTableRow>
+                  <CTableDataCell colSpan={3}>No data available</CTableDataCell>
+                </CTableRow>
+              )}
+            </CTableBody>
+          </CTable>
+        </CCardBody>
+      </CCard>
     </>
   );
 };
