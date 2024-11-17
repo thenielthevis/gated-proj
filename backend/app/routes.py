@@ -184,65 +184,47 @@ async def scan_mongo_db(
     
 # SQL scan endpoint
 @sql_scan_router.post("/upload-sql-file")
-async def upload_sql_file(file: UploadFile = File(...), current_user: Dict[str, Any] = Depends(get_current_user)):
-    """
-    Endpoint to scan SQL files for risks.
-    """
-    try:
-        user_id = current_user["id"]
+async def upload_sql_file(file: UploadFile = File(...), user_id: str = "example_user_id"):
+    if file.content_type != "text/plain":
+        raise HTTPException(status_code=400, detail="Only text files are allowed.")
+    
+    content = await file.read()
+    sql_content = content.decode("utf-8")
+    
+    # Validate SQL content (Assume validate_sql_script is a function you already have)
+    analysis = validate_sql_script(sql_content)
 
-        if file.content_type != "text/plain":
-            raise HTTPException(status_code=400, detail="Only text files are allowed.")
-        
-        content = await file.read()
-        sql_content = content.decode("utf-8")
-        
-        # Validate the SQL content (Assume validate_sql_script is a function you already have)
-        analysis = validate_sql_script(sql_content)
+    # Categorize the results
+    categorized_results = categorize_results(analysis)
 
-        # Categorize the results
-        categorized_results = categorize_results(analysis)
+    # Save the upload record in MongoDB
+    await store_file_upload_record(user_id=user_id, service="SQL", findings=categorized_results)
 
-        # Save the upload record in MongoDB
-        await store_file_upload_record(user_id=user_id, service="SQL", findings=categorized_results)
+    return {"analysis": categorized_results}
 
-        return {"status": "Scan completed", "findings": categorized_results, "message": "Scan results saved successfully"}
-
-    except Exception as e:
-        print(f"Error during SQL scan: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error during SQL scan: {str(e)}")
 
 # JSON scan endpoint
 @json_scan_router.post("/upload-json-file")
-async def upload_json_file(file: UploadFile = File(...), current_user: Dict[str, Any] = Depends(get_current_user)):
-    """
-    Endpoint to scan JSON files for risks.
-    """
+async def upload_json_file(file: UploadFile = File(...), user_id: str = "example_user_id"):
+    if file.content_type != "application/json":
+        raise HTTPException(status_code=400, detail="Only JSON files are allowed.")
+
+    content = await file.read()
     try:
-        user_id = current_user["id"]
+        json_content = content.decode("utf-8")
+        # Assuming validate_json_script is a function to validate JSON content
+        analysis = validate_json_script(json_content)  
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="File is not valid JSON format")
 
-        if file.content_type != "application/json":
-            raise HTTPException(status_code=400, detail="Only JSON files are allowed.")
-        
-        content = await file.read()
-        try:
-            json_content = content.decode("utf-8")
-            # Validate the JSON content (Assume validate_json_script is a function you already have)
-            analysis = validate_json_script(json_content)  
-        except UnicodeDecodeError:
-            raise HTTPException(status_code=400, detail="File is not valid JSON format")
+    # Categorize the results
+    categorized_results = categorize_results(analysis)
 
-        # Categorize the results
-        categorized_results = categorize_results(analysis)
+    # Save the upload record in MongoDB
+    await store_file_upload_record(user_id=user_id, service="JSON", findings=categorized_results)
 
-        # Save the upload record in MongoDB
-        await store_file_upload_record(user_id=user_id, service="JSON", findings=categorized_results)
+    return {"analysis": categorized_results}
 
-        return {"status": "Scan completed", "findings": categorized_results, "message": "Scan results saved successfully"}
-
-    except Exception as e:
-        print(f"Error during JSON scan: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error during JSON scan: {str(e)}")
 
 # Firestore scan endpoint
 @firebase_scan_router.post("/firestore-scan")
