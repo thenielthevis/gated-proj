@@ -45,12 +45,12 @@ const JSONScript = () => {
 
   const handleFileUpload = async () => {
     if (!file) {
-      Swal.fire({
-        icon: 'error',
-        title: 'No File Selected',
-        text: 'Please select a file first.',
-      });
-      return;
+        Swal.fire({
+            icon: 'error',
+            title: 'No File Selected',
+            text: 'Please select a file first.',
+        });
+        return;
     }
 
     const formData = new FormData();
@@ -59,48 +59,49 @@ const JSONScript = () => {
     const token = localStorage.getItem('token');
 
     try {
-      Swal.fire({
-        title: 'Uploading File...',
-        text: 'Please wait while your file is being uploaded.',
-        allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading();
-        },
-      });
+        Swal.fire({
+            title: 'Uploading File...',
+            text: 'Please wait while your file is being uploaded.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            },
+        });
 
-      const response = await fetch('http://localhost:8000/json/upload-json-file', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+        const response = await fetch('http://localhost:8000/json/upload-json-file', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json',  // Explicitly accept JSON response
+            },
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'File upload failed');
-      }
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'File upload failed');
+        }
 
-      const data = await response.json();
-      setAnalysisResults(data.analysis || { danger: [], warning: [], good: [] });
+        const data = await response.json();
+        setAnalysisResults(data.analysis || { danger: [], warning: [], good: [] });
 
-      Swal.fire({
-        icon: 'success',
-        title: 'Upload Successful',
-        text: 'Your file has been uploaded and processed successfully!',
-        timer: 2000,
-      });
+        Swal.fire({
+            icon: 'success',
+            title: 'Upload Successful',
+            text: 'Your file has been uploaded and processed successfully!',
+            timer: 2000,
+        });
 
-      toast.success('JSON script scanning is complete!');
+        toast.success('JSON script scanning is complete!');
     } catch (error) {
-      console.error('Error uploading file:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error Uploading File',
-        text: error.message || 'Failed to upload file. Please try again.',
-      });
+        console.error('Error uploading file:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error Uploading File',
+            text: error.message || 'Failed to upload file. Please try again.',
+        });
     }
-  };
+};
 
   const exportToPDF = () => {
     const doc = new jsPDF();
@@ -164,15 +165,14 @@ const JSONScript = () => {
           <CButton color="primary" onClick={handleFileUpload}>
             Upload and Scan
           </CButton>
+          <CButton color="secondary" onClick={exportToPDF} style={{margin:'10px'}}>
+            Export to PDF
+          </CButton>
         </CCardBody>
       </CCard>
 
       {analysisResults && (
         <>
-          <CButton color="success" onClick={exportToPDF} className="mb-3">
-            Export to PDF
-          </CButton>
-
           <CCard className="p-0">
             <CCardHeader>Scan Results</CCardHeader>
             <CTabs activeItemKey={activeTab} onActiveTabChange={setActiveTab}>
@@ -182,7 +182,7 @@ const JSONScript = () => {
                 <CTab itemKey={2}>Good Practices</CTab>
               </CTabList>
 
-              <CTabContent style={{margin: '15px'}}>
+              <CTabContent style={{padding: '15px'}}>
                 {/* Danger Section */}
                 <CTabPanel itemKey={0}>
                   {analysisResults.danger.length > 0 ? (
@@ -239,6 +239,50 @@ const JSONScript = () => {
               </CTabContent>
             </CTabs>
           </CCard>
+          {/* Educational Materials Section */}
+      {analysisResults && (
+        <CCard className="mt-4" style={{marginBottom: '30px'}}>
+          <CCardBody>
+            <h5>Educational Materials</h5>
+            <h6>Learn how to mitigate these risks now before it's too late!</h6>
+            <ul>
+              {(
+                <li>
+                  <a
+                    href="http://localhost:3000/icons/coreui-icons#/buttons/buttons"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    About JSON
+                  </a>
+                </li>
+              )}
+              {(
+                <li>
+                  <a
+                    href="/icons/coreui-icons#/buttons/button-groups"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Good Practices for Working with JSON
+                  </a>
+                </li>
+              )}
+              {(
+                <li>
+                  <a
+                    href="/icons/coreui-icons#/buttons/dropdowns"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Common JSON Mistakes and How to Avoid Them
+                  </a>
+                </li>
+              )}
+            </ul>
+          </CCardBody>
+        </CCard>
+      )}
         </>
       )}
     </>

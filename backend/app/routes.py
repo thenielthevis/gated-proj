@@ -162,7 +162,7 @@ async def scan_mongo_db(
 
         # Create the scan result with service name 'MONGODB'
         record = ScanResult(
-            user_uri_id=str(user_id),
+            user_id=str(user_id),
             service="MongoDB",
             findings=categorized_results,
             timestamp=datetime.now(),
@@ -184,7 +184,6 @@ async def scan_mongo_db(
         print(f"Error during scan: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error during scanning: {str(e)}")
     
-# SQL scan endpoint
 @sql_scan_router.post("/upload-sql-file")
 async def upload_sql_file(
     file: UploadFile = File(...), 
@@ -207,7 +206,7 @@ async def upload_sql_file(
 
     # Prepare the ScanResult for saving
     scan_result = ScanResult(
-        user_uri_id=current_user["id"],
+        user_id=current_user["id"],  # Changed from user_uri_id to user_id
         service="SQL",
         findings=categorized_results,
         timestamp=datetime.now()
@@ -228,29 +227,31 @@ async def upload_json_file(
     file: UploadFile = File(...), 
     current_user: dict = Depends(get_current_user)
 ):
-    if file.content_type != "application/json":
-        raise HTTPException(status_code=400, detail="Only JSON files are allowed.")
-
-    content = await file.read()
     try:
+        if file.content_type != "application/json":
+            raise HTTPException(status_code=400, detail="Only JSON files are allowed.")
+
+        content = await file.read()
         json_content = content.decode("utf-8")
+        
+        # Validate the JSON file content
         analysis = validate_json_script(json_content)
-    except UnicodeDecodeError:
-        raise HTTPException(status_code=400, detail="File is not valid JSON format")
 
-    # Categorize the results
-    categorized_results = categorize_results(analysis)
+        # Categorize the results and store in MongoDB
+        categorized_results = categorize_results(analysis)
+        await store_file_upload_record(
+            user_id=current_user["id"],
+            service="JSON",
+            findings=categorized_results
+        )
 
-    # Save the upload record in MongoDB with the user ID from the token
-    await store_file_upload_record(
-        user_uri_id=current_user["id"], 
-        service="JSON", 
-        findings=categorized_results  # Now it’s a JSON-serializable dict
-    )
-
-    return {"analysis": categorized_results}
-
-# Firestore scan endpoint
+        return {"analysis": categorized_results}
+    
+    except Exception as e:
+        # Log the error to get more context about the internal server error
+        print(f"Error in /upload-json-file endpoint: {e}")
+        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+        
 @firebase_scan_router.post("/firestore-scan")
 async def firestore_scan(request: FirestoreScanRequest, current_user: Dict[str, Any] = Depends(get_current_user)):
     """
@@ -264,24 +265,26 @@ async def firestore_scan(request: FirestoreScanRequest, current_user: Dict[str, 
             raise ValueError("Firestore service account key is required")
 
         # Run the Firestore risk scan (Assume scan_firestore_for_risks is a function to perform the scan)
-        audit_results = scan_firestore_for_risks(firestore_key)
+        scan_result = scan_firestore_for_risks(firestore_key)
 
-        # Check if the audit_results is a dictionary (we expect it to be a dict with an 'audit_results' key)
-        if isinstance(audit_results, dict):
-            if 'audit_results' in audit_results:
-                audit_results = audit_results['audit_results']
-            else:
-                raise ValueError("The returned dictionary does not contain 'audit_results' key")
-        elif not isinstance(audit_results, list):
-            raise ValueError(f"Expected a list of audit results, but got {type(audit_results)}")
+        # Directly use the already categorized results from scan_firestore_for_risks
+        categorized_results = scan_result["audit_results"]
 
-        # Categorize the results
-        categorized_results = categorize_results(audit_results)
+        # Convert Finding objects to dictionaries before saving them to MongoDB
+        categorized_results_dict = {
+            "danger": [finding.to_dict() for finding in categorized_results["danger"]],
+            "warning": [finding.to_dict() for finding in categorized_results["warning"]],
+            "good": [finding.to_dict() for finding in categorized_results["good"]],
+        }
 
         # Save the audit results in MongoDB
-        await store_file_upload_record(user_id=user_id, service="Firestore", findings=categorized_results)
+        await store_file_upload_record(user_id=user_id, service="Firestore", findings=categorized_results_dict)
 
-        return {"status": "Scanning completed", "findings": categorized_results, "message": "Scan results saved successfully"}
+        return {
+            "status": "Scanning completed",
+            "findings": categorized_results_dict,
+            "message": "Scan results saved successfully"
+        }
 
     except Exception as e:
         print(f"Error during Firestore scan: {str(e)}")
@@ -307,24 +310,10 @@ async def firebase_hosting_scan(request: FirebaseHostingScanRequest, current_use
             raise ValueError(f"The domain '{domain}' does not resolve to any IP address.")
 
         # Run the Firebase Hosting scan (Assume scan_firebase_hosting is a function to perform the scan)
-        audit_results = scan_firebase_hosting(domain)
-        
-        # Check if the audit_results is a dictionary (we expect it to be a dict with an 'audit_results' key)
-        if isinstance(audit_results, dict):
-            if 'audit_results' in audit_results:
-                audit_results = audit_results['audit_results']
-            else:
-                raise ValueError("The returned dictionary does not contain 'audit_results' key")
-        elif not isinstance(audit_results, list):
-            raise ValueError(f"Expected a list of audit results, but got {type(audit_results)}")
+        scan_result = scan_firebase_hosting(domain)  # No categorization in the route
 
-        # Ensure each item in the audit_results is a dictionary with 'category' key
-        for result in audit_results:
-            if not isinstance(result, dict) or 'category' not in result:
-                raise ValueError("Each audit result must be a dictionary with a 'category' key")
-
-        # Categorize the results
-        categorized_results = categorize_results(audit_results)
+        # Directly use the audit_results from the scan_firebase_hosting function (already categorized)
+        categorized_results = scan_result["audit_results"]
 
         # Save the scan results in MongoDB
         await store_file_upload_record(user_id=user_id, service="Firebase Hosting", findings=categorized_results)
@@ -334,7 +323,6 @@ async def firebase_hosting_scan(request: FirebaseHostingScanRequest, current_use
     except Exception as e:
         print(f"Error during Firebase Hosting scan: {str(e)}")
         raise HTTPException(status_code=400, detail=f"Error: {str(e)}")
-    
 
 @analytics_router.get("/analytics", response_model=List[AnalyticsData])
 async def get_analytics():

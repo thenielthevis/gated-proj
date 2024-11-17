@@ -11,10 +11,7 @@ import {
   CTableHead,
   CTableHeaderCell,
   CTableRow,
-  CButton,
 } from '@coreui/react';
-import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
 import { Bar, Pie, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, PointElement, LineElement } from 'chart.js';
 
@@ -26,8 +23,8 @@ ChartJS.register(
   Tooltip,
   Legend,
   ArcElement,
-  PointElement,
-  LineElement
+  PointElement,   // Register PointElement
+  LineElement     // Register LineElement for Line charts
 );
 
 const Dashboard = () => {
@@ -54,15 +51,17 @@ const Dashboard = () => {
     return <div>Loading...</div>;
   }
 
-  // Default to 0 if no analytics data is available
+  // Calculate total scans from findings_count
   const totalScans = analyticsData.reduce((total, item) => total + (item.findings_count || 0), 0);
 
-  const mostScannedService = analyticsData.length > 0 ? analyticsData.reduce(
+  // Determine the most scanned service
+  const mostScannedService = analyticsData.reduce(
     (max, item) => (item.findings_count > max.findings_count ? item : max),
     { service: '', findings_count: 0 }
-  ).service : 'N/A';
+  ).service;
 
-  const mostFindingsResult = analyticsData.length > 0 ? analyticsData.reduce(
+  // Aggregate the total good, warning, and danger findings
+  const mostFindingsResult = analyticsData.reduce(
     (acc, item) => {
       acc.good += item.good || 0;
       acc.warning += item.warning || 0;
@@ -70,8 +69,9 @@ const Dashboard = () => {
       return acc;
     },
     { good: 0, warning: 0, danger: 0 }
-  ) : { good: 0, warning: 0, danger: 0 };
+  );
 
+  // Prepare data for the pie chart
   const pieChartData = {
     labels: ['Good', 'Warning', 'Danger'],
     datasets: [
@@ -83,12 +83,13 @@ const Dashboard = () => {
     ],
   };
 
+  // Prepare data for the line chart
   const lineChartData = {
     labels: analyticsData.map(item => new Date(item.timestamp).toLocaleDateString()),
     datasets: [
       {
         label: 'Findings Count Over Time',
-        data: analyticsData.map(item => item.findings_count || 0),
+        data: analyticsData.map(item => item.findings_count),
         borderColor: '#36A2EB',
         backgroundColor: 'rgba(54, 162, 235, 0.2)',
         fill: true,
@@ -96,6 +97,7 @@ const Dashboard = () => {
     ],
   };
 
+  // Prepare data for the stacked bar chart (Good, Warning, Danger findings)
   const stackedBarChartData = {
     labels: analyticsData.map(item => item.service),
     datasets: [
@@ -117,6 +119,7 @@ const Dashboard = () => {
     ],
   };
 
+  // Bar chart for Service Scan Count
   const chartData = {
     labels: analyticsData.map(item => item.service),
     datasets: [
@@ -130,83 +133,70 @@ const Dashboard = () => {
     ],
   };
 
-  // Function to export Analytics Details table as PDF
-  const exportPDF = () => {
-    const input = document.getElementById('analytics-table');
-    html2canvas(input).then((canvas) => {
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF();
-      const imgWidth = pdf.internal.pageSize.getWidth();
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-      pdf.save('Analytics_Details.pdf');
-    });
-  };
-
   return (
     <>
-      {/* Top Summary Cards */}
-      <CRow className="mb-4">
-        <CCol sm={6} md={3} className="mb-4">
-          <CCard className="h-100">
-            <CCardHeader>Total Users</CCardHeader>
-            <CCardBody>
-              <h3>{totalUsers}</h3>
-            </CCardBody>
-          </CCard>
-        </CCol>
+{/* Top Summary Cards */}
+<CRow className="mb-4">
+  <CCol sm={6} md={3} className="mb-4">
+    <CCard className="h-100">
+      <CCardHeader>Total Users</CCardHeader>
+      <CCardBody>
+        <h3>{totalUsers}</h3>
+      </CCardBody>
+    </CCard>
+  </CCol>
 
-        <CCol sm={6} md={3} className="mb-4">
-          <CCard className="h-100">
-            <CCardHeader>Total Scans</CCardHeader>
-            <CCardBody>
-              <h3>{totalScans}</h3>
-            </CCardBody>
-          </CCard>
-        </CCol>
+  <CCol sm={6} md={3} className="mb-4">
+    <CCard className="h-100">
+      <CCardHeader>Total Scans</CCardHeader>
+      <CCardBody>
+        <h3>{totalScans}</h3>
+      </CCardBody>
+    </CCard>
+  </CCol>
 
-        <CCol sm={6} md={3} className="mb-4">
-          <CCard className="h-100">
-            <CCardHeader>Most Scanned Service</CCardHeader>
-            <CCardBody>
-              <h3>{mostScannedService}</h3>
-            </CCardBody>
-          </CCard>
-        </CCol>
+  <CCol sm={6} md={3} className="mb-4">
+    <CCard className="h-100">
+      <CCardHeader>Most Scanned Service</CCardHeader>
+      <CCardBody>
+        <h3>{mostScannedService}</h3>
+      </CCardBody>
+    </CCard>
+  </CCol>
 
-        <CCol sm={6} md={3} className="mb-4">
-          <CCard className="h-100">
-            <CCardHeader>Most Result Findings</CCardHeader>
-            <CCardBody>
-              <h5>Good: {mostFindingsResult.good}</h5>
-              <h5>Warning: {mostFindingsResult.warning}</h5>
-              <h5>Danger: {mostFindingsResult.danger}</h5>
-            </CCardBody>
-          </CCard>
-        </CCol>
-      </CRow>
+  <CCol sm={6} md={3} className="mb-4">
+    <CCard className="h-100">
+      <CCardHeader>Most Result Findings</CCardHeader>
+      <CCardBody>
+        <h5>Good: {mostFindingsResult.good}</h5>
+        <h5>Warning: {mostFindingsResult.warning}</h5>
+        <h5>Danger: {mostFindingsResult.danger}</h5>
+      </CCardBody>
+    </CCard>
+  </CCol>
+</CRow>
 
-      {/* Pie Chart for Findings Distribution */}
-      <CRow className="mb-4">
-        <CCol sm={6} md={4}>
-          <CCard className="mb-4 h-100">
-            <CCardHeader>Findings Distribution</CCardHeader>
-            <CCardBody className="d-flex align-items-center justify-content-center">
-              <Pie data={pieChartData} options={{ responsive: true }} height={100} />
-            </CCardBody>
-          </CCard>
-        </CCol>
+{/* Pie Chart for Findings Distribution */}
+<CRow className="mb-4">
+  <CCol sm={6} md={4}>
+    <CCard className="mb-4 h-100">
+      <CCardHeader>Findings Distribution</CCardHeader>
+      <CCardBody className="d-flex align-items-center justify-content-center">
+        <Pie data={pieChartData} options={{ responsive: true }} height={100} />
+      </CCardBody>
+    </CCard>
+  </CCol>
 
-        {/* Line Chart for Findings Count Over Time */}
-        <CCol sm={12} md={8}>
-          <CCard className="mb-4 h-100">
-            <CCardHeader>Findings Over Time</CCardHeader>
-            <CCardBody className="d-flex align-items-center justify-content-center">
-              <Line data={lineChartData} options={{ responsive: true }} height={100} />
-            </CCardBody>
-          </CCard>
-        </CCol>
-      </CRow>
+  {/* Line Chart for Findings Count Over Time */}
+  <CCol sm={12} md={8}>
+    <CCard className="mb-4 h-100">
+      <CCardHeader>Findings Over Time</CCardHeader>
+      <CCardBody className="d-flex align-items-center justify-content-center">
+        <Line data={lineChartData} options={{ responsive: true }} height={100} />
+      </CCardBody>
+    </CCard>
+  </CCol>
+</CRow>
 
       {/* Stacked Bar Chart for Good, Warning, Danger Findings */}
       <CRow>
@@ -240,15 +230,10 @@ const Dashboard = () => {
         </CCardBody>
       </CCard>
 
-      {/* Analytics Table with Export PDF Button */}
+      {/* Analytics Table */}
       <CCard className="mb-4">
-        <CCardHeader>
-          Analytics Details
-          <CButton color="primary" className="float-end" onClick={exportPDF}>
-            Export PDF
-          </CButton>
-        </CCardHeader>
-        <CCardBody id="analytics-table">
+        <CCardHeader>Analytics Details</CCardHeader>
+        <CCardBody>
           <CTable align="middle" className="mb-0 border" hover responsive>
             <CTableHead>
               <CTableRow>
@@ -258,17 +243,13 @@ const Dashboard = () => {
               </CTableRow>
             </CTableHead>
             <CTableBody>
-              {analyticsData.length > 0 ? analyticsData.map((item, index) => (
+              {analyticsData.map((item, index) => (
                 <CTableRow key={index}>
                   <CTableDataCell>{item.service}</CTableDataCell>
                   <CTableDataCell>{item.findings_count}</CTableDataCell>
                   <CTableDataCell>{new Date(item.timestamp).toLocaleString()}</CTableDataCell>
                 </CTableRow>
-              )) : (
-                <CTableRow>
-                  <CTableDataCell colSpan={3}>No data available</CTableDataCell>
-                </CTableRow>
-              )}
+              ))}
             </CTableBody>
           </CTable>
         </CCardBody>

@@ -553,23 +553,34 @@ def check_data_redundancy(firestore_client):
     except Exception as e:
         return f"Error: {str(e)}"
 
-# Categorize Results
 def categorize_results(analysis: dict) -> Dict[str, List[Finding]]:
     """
-    Categorizes analysis results into danger, warning, and good practices.
-    Returns a dictionary of categorized Finding instances.
+    This function categorizes the results into 'Warning', 'Danger', or 'Good' categories
+    based on the messages and returns the results in a structured format.
     """
-    return {
-        "danger": [Finding(check="Dangerous Check", result=message, category="Danger") for message in analysis.get("errors", [])],
-        "warning": [Finding(check="Warning Check", result=message, category="Warning") for message in analysis.get("warnings", [])],
-        "good": [Finding(check="Good Practice", result=message, category="Good") for message in analysis.get("good_practices", [])],
+    categorized_results = {
+        "danger": [
+            Finding(check="Dangerous Check", result=message, category="Danger") 
+            for message in analysis.get("errors", [])
+        ],
+        "warning": [
+            Finding(check="Warning Check", result=message, category="Warning") 
+            for message in analysis.get("warnings", [])
+        ],
+        "good": [
+            Finding(check="Good Practice", result=message, category="Good") 
+            for message in analysis.get("good_practices", [])
+        ],
     }
-# Full scan function
+    return categorized_results
+
+
+
 def scan_firestore_for_risks(service_account_key: str) -> Dict[str, Any]:
     try:
         firestore_client = initialize_firestore(service_account_key)
-        
-        # Perform checks
+
+        # Perform checks and categorize results
         checks = {
             "Security Rules": check_rules_config(firestore_client),
             "Open Access": check_open_access(firestore_client),
@@ -581,21 +592,34 @@ def scan_firestore_for_risks(service_account_key: str) -> Dict[str, Any]:
             "Data Redundancy": check_data_redundancy(firestore_client)
         }
 
-        # Categorize results
-        audit_results = []
+        analysis = {"errors": [], "warnings": [], "good_practices": []}
         for check, result in checks.items():
             category = categorize_result(result)
-            audit_results.append({
-                "check": check,
-                "result": result,
-                "category": category
-            })
+            if category == "Danger":
+                analysis["errors"].append(result)
+            elif category == "Warning":
+                analysis["warnings"].append(result)
+            else:
+                analysis["good_practices"].append(result)
 
-        # Return the corrected structure
+        # Categorize findings as Finding objects
+        categorized_results = categorize_results(analysis)
+
+        analysis = {"errors": [], "warnings": [], "good_practices": []}
+        for check, result in checks.items():
+            category = categorize_result(result)
+            if category == "Danger":
+                analysis["errors"].append(result)
+            elif category == "Warning":
+                analysis["warnings"].append(result)
+            else:
+                analysis["good_practices"].append(result)
+
         return {
             "status": "Scanning completed",
-            "audit_results": audit_results  # Flattened array
+            "audit_results": categorized_results
         }
+
     except Exception as e:
         return {"status": "error", "error": str(e)}
 
@@ -709,30 +733,35 @@ def scan_firebase_hosting(domain: str) -> dict:
             "Rate Limiting": check_rate_limiting(domain),
         }
 
-        audit_results = []
+        # Initialize categories
+        categorized_results = {
+            "danger": [],
+            "warning": [],
+            "good": []
+        }
+
+        # Perform checks and categorize the results
         for check, result in hosting_checks.items():
             # Categorize result based on its content
             if "Could not" in result:  # Any error-related message
-                category = "Danger"
+                category = "danger"
             elif "Missing" in result or "Low" in result:  # Warning-related messages
-                category = "Warning"
+                category = "warning"
             else:  # Anything else is considered "Good"
-                category = "Good"
+                category = "good"
 
-            audit_results.append({
+            categorized_results[category].append({
                 "check": check,
                 "result": result,
-                "category": category
+                "category": category.capitalize()  # Ensure the category is capitalized ("Danger", "Warning", "Good")
             })
 
         return {
             "status": "Scanning completed",
-            "audit_results": audit_results
+            "audit_results": categorized_results  # Returning the categorized results
         }
     except Exception as e:
         return {"status": "error", "error": str(e)}
-
-
 
 def validate_json_script(content: str) -> Dict[str, List[str]]:
     """

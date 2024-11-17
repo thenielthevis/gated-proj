@@ -156,15 +156,14 @@ const SQLScript = () => {
           <CButton color="primary" onClick={handleFileUpload}>
             Upload and Scan
           </CButton>
+          <CButton color="secondary" onClick={exportToPDF} style={{margin:'10px'}}>
+            Export to PDF
+          </CButton>
         </CCardBody>
       </CCard>
 
       {analysisResults && (
         <>
-          <CButton color="success" onClick={exportToPDF} className="mb-3">
-            Export to PDF
-          </CButton>
-
           <CCard className="p-0">
             <CCardHeader>Scan Results</CCardHeader>
             <CTabs activeItemKey={activeTab} onActiveTabChange={setActiveTab}>
@@ -174,7 +173,7 @@ const SQLScript = () => {
                 <CTab itemKey={2}>Good Practices</CTab>
               </CTabList>
 
-              <CTabContent style={{margin: '15px'}}>
+              <CTabContent style={{padding: '15px'}}>
                 {/* Danger Section */}
                 <CTabPanel itemKey={0}>
                   {analysisResults.danger.length > 0 ? (
@@ -231,6 +230,50 @@ const SQLScript = () => {
               </CTabContent>
             </CTabs>
           </CCard>
+           {/* Educational Materials Section */}
+      {analysisResults && (
+        <CCard className="mt-4" style={{marginBottom: '30px'}}>
+          <CCardBody>
+            <h5>Educational Materials</h5>
+            <h6>Learn how to mitigate these risks now before it's too late!</h6>
+            <ul>
+              {(
+                <li>
+                  <a
+                    href="/icons/coreui-icons#/base/accordion"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    What is SQL?
+                  </a>
+                </li>
+              )}
+              {(
+                <li>
+                  <a
+                    href="/icons/coreui-icons#/base/breadcrumbs"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    SQL Best Practices
+                  </a>
+                </li>
+              )}
+              {(
+                <li>
+                  <a
+                    href="/icons/coreui-icons#/base/cards"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Avoid these 7 SQL Mistakes for Better Database Management
+                  </a>
+                </li>
+              )}
+            </ul>
+          </CCardBody>
+        </CCard>
+      )}
         </>
       )}
     </>

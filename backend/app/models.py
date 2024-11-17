@@ -42,8 +42,11 @@ class Finding(BaseModel):
     result: str
     category: str
 
+    def to_dict(self) -> dict:
+        return self.dict()
+
 class ScanResult(BaseModel):
-    user_uri_id: str  # Update this to match the field being passed
+    user_id: str  # Update this to match the field being passed
     service: str
     findings: Dict[str, List[Finding]]  # Keeping the structured findings field
     timestamp: datetime = datetime.now()
