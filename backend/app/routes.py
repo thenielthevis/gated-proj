@@ -228,28 +228,31 @@ async def upload_json_file(
     file: UploadFile = File(...), 
     current_user: dict = Depends(get_current_user)
 ):
-    if file.content_type != "application/json":
-        raise HTTPException(status_code=400, detail="Only JSON files are allowed.")
-
-    content = await file.read()
     try:
+        if file.content_type != "application/json":
+            raise HTTPException(status_code=400, detail="Only JSON files are allowed.")
+
+        content = await file.read()
         json_content = content.decode("utf-8")
+        
+        # Validate the JSON file content
         analysis = validate_json_script(json_content)
-    except UnicodeDecodeError:
-        raise HTTPException(status_code=400, detail="File is not valid JSON format")
 
-    # Categorize the results
-    categorized_results = categorize_results(analysis)
+        # Categorize the results and store in MongoDB
+        categorized_results = categorize_results(analysis)
+        await store_file_upload_record(
+            user_id=current_user["id"],
+            service="JSON",
+            findings=categorized_results
+        )
 
-    # Save the upload record in MongoDB with the user ID from the token
-    await store_file_upload_record(
-        user_uri_id=current_user["id"], 
-        service="JSON", 
-        findings=categorized_results  # Now it’s a JSON-serializable dict
-    )
-
-    return {"analysis": categorized_results}
-
+        return {"analysis": categorized_results}
+    
+    except Exception as e:
+        # Log the error to get more context about the internal server error
+        print(f"Error in /upload-json-file endpoint: {e}")
+        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+        
 # Firestore scan endpoint
 @firebase_scan_router.post("/firestore-scan")
 async def firestore_scan(request: FirestoreScanRequest, current_user: Dict[str, Any] = Depends(get_current_user)):

@@ -45,12 +45,12 @@ const JSONScript = () => {
 
   const handleFileUpload = async () => {
     if (!file) {
-      Swal.fire({
-        icon: 'error',
-        title: 'No File Selected',
-        text: 'Please select a file first.',
-      });
-      return;
+        Swal.fire({
+            icon: 'error',
+            title: 'No File Selected',
+            text: 'Please select a file first.',
+        });
+        return;
     }
 
     const formData = new FormData();
@@ -59,48 +59,49 @@ const JSONScript = () => {
     const token = localStorage.getItem('token');
 
     try {
-      Swal.fire({
-        title: 'Uploading File...',
-        text: 'Please wait while your file is being uploaded.',
-        allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading();
-        },
-      });
+        Swal.fire({
+            title: 'Uploading File...',
+            text: 'Please wait while your file is being uploaded.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            },
+        });
 
-      const response = await fetch('http://localhost:8000/json/upload-json-file', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+        const response = await fetch('http://localhost:8000/json/upload-json-file', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json',  // Explicitly accept JSON response
+            },
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'File upload failed');
-      }
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'File upload failed');
+        }
 
-      const data = await response.json();
-      setAnalysisResults(data.analysis || { danger: [], warning: [], good: [] });
+        const data = await response.json();
+        setAnalysisResults(data.analysis || { danger: [], warning: [], good: [] });
 
-      Swal.fire({
-        icon: 'success',
-        title: 'Upload Successful',
-        text: 'Your file has been uploaded and processed successfully!',
-        timer: 2000,
-      });
+        Swal.fire({
+            icon: 'success',
+            title: 'Upload Successful',
+            text: 'Your file has been uploaded and processed successfully!',
+            timer: 2000,
+        });
 
-      toast.success('JSON script scanning is complete!');
+        toast.success('JSON script scanning is complete!');
     } catch (error) {
-      console.error('Error uploading file:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error Uploading File',
-        text: error.message || 'Failed to upload file. Please try again.',
-      });
+        console.error('Error uploading file:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error Uploading File',
+            text: error.message || 'Failed to upload file. Please try again.',
+        });
     }
-  };
+};
 
   const exportToPDF = () => {
     const doc = new jsPDF();
