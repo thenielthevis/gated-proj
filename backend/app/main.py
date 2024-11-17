@@ -10,7 +10,7 @@ from pymongo import MongoClient
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from uvicorn.config import Config
-from .routes import user_router, mongo_scan_router, sql_scan_router, json_scan_router, firebase_scan_router
+from .routes import user_router, mongo_scan_router, sql_scan_router, json_scan_router, firebase_scan_router, analytics_router
 from urllib.parse import urlparse
 from cryptography.fernet import Fernet
 from .models import User, UserInDB, FileUploadRecord  # Importing models relatively
@@ -28,7 +28,7 @@ app = FastAPI()
 # CORS configuration to allow frontend requests from http://localhost:3000
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Adjust this URL to your frontend's origin
+    allow_origins=["http://localhost:3000"],  # Add exact frontend origin
     allow_credentials=True,
     allow_methods=["*"],  # Allow all methods
     allow_headers=["*"],  # Allow all headers
@@ -40,6 +40,7 @@ app.include_router(mongo_scan_router, prefix="/scan")
 app.include_router(sql_scan_router, prefix="/sql")  # Include the SQL scan router with a prefix
 app.include_router(json_scan_router, prefix="/json")  # Include JSON scan router
 app.include_router(firebase_scan_router, prefix="/firebase")
+app.include_router(analytics_router, prefix="/dashboard")
 
 # SECRET_KEY validation
 secret_key = os.getenv("SECRET_KEY")

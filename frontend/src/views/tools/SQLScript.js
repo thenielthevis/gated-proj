@@ -1,10 +1,20 @@
+
+
 import React, { useState } from 'react';
 import {
   CButton,
   CCard,
   CCardBody,
   CCardHeader,
-  CAlert,
+  CAccordion,
+  CAccordionItem,
+  CAccordionHeader,
+  CAccordionBody,
+  CTabs,
+  CTabContent,
+  CTabPanel,
+  CTabList,
+  CTab,
 } from '@coreui/react';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
@@ -14,7 +24,12 @@ import 'react-toastify/dist/ReactToastify.css';
 
 const SQLScript = () => {
   const [file, setFile] = useState(null);
-  const [analysisResults, setAnalysisResults] = useState(null);
+  const [activeTab, setActiveTab] = useState(0);
+  const [analysisResults, setAnalysisResults] = useState({
+    danger: [],
+    warning: [],
+    good: []
+  });
 
   const handleFileChange = (event) => {
     setFile(event.target.files[0]);
@@ -59,7 +74,7 @@ const SQLScript = () => {
       }
 
       const data = await response.json();
-      setAnalysisResults(data.analysis);
+      setAnalysisResults(data.analysis || { danger: [], warning: [], good: [] });
 
       Swal.fire({
         icon: 'success',
@@ -90,40 +105,40 @@ const SQLScript = () => {
       if (items.length === 0) {
         return [[`${title} - No issues detected.`]];
       }
-      return items.map((item, index) => [`${title} #${index + 1}`, item]);
+      return items.map((item, index) => [
+        `${title} #${index + 1}`,
+        item.check || 'N/A',
+        item.result || 'N/A',
+      ]);
     };
-
-    const dangersTableData = createTableData('Danger', analysisResults?.danger || []);
-    const warningsTableData = createTableData('Warning', analysisResults?.warning || []);
-    const goodPracticesTableData = createTableData('Good Practice', analysisResults?.good || []);
 
     const startY = 30;
 
+    // Danger Table
     doc.autoTable({
       startY,
-      head: [['Type', 'Description']],
-      body: dangersTableData,
+      head: [['Type', 'Check', 'Description']],
+      body: createTableData('Danger', analysisResults.danger),
       theme: 'grid',
       headStyles: { fillColor: [220, 53, 69], textColor: 255 },
-      columnStyles: { 1: { cellWidth: 'auto' } },
     });
 
+    // Warning Table
     doc.autoTable({
       startY: doc.previousAutoTable.finalY + 10,
-      head: [['Type', 'Description']],
-      body: warningsTableData,
+      head: [['Type', 'Check', 'Description']],
+      body: createTableData('Warning', analysisResults.warning),
       theme: 'grid',
       headStyles: { fillColor: [255, 193, 7], textColor: 0 },
-      columnStyles: { 1: { cellWidth: 'auto' } },
     });
 
+    // Good Practices Table
     doc.autoTable({
       startY: doc.previousAutoTable.finalY + 10,
-      head: [['Type', 'Description']],
-      body: goodPracticesTableData,
+      head: [['Type', 'Check', 'Description']],
+      body: createTableData('Good Practice', analysisResults.good),
       theme: 'grid',
       headStyles: { fillColor: [40, 167, 69], textColor: 255 },
-      columnStyles: { 1: { cellWidth: 'auto' } },
     });
 
     doc.save('SQL_Script_Analysis_Report.pdf');
@@ -145,95 +160,78 @@ const SQLScript = () => {
       </CCard>
 
       {analysisResults && (
-        <div>
-          <h3>Analysis Results</h3>
+        <>
+          <CButton color="success" onClick={exportToPDF} className="mb-3">
+            Export to PDF
+          </CButton>
 
-          {/* Dangers Section */}
-          {analysisResults.danger && analysisResults.danger.length > 0 && (
-            <CCard className="p-0 mb-3">
-              <CCardHeader>Danger</CCardHeader>
-              <CCardBody>
-                {analysisResults.danger.map((item, index) => (
-                  <CAlert color="danger" key={index}>
-                    {typeof item === 'string' ? item : JSON.stringify(item)}
-                  </CAlert>
-                ))}
-              </CCardBody>
-            </CCard>
-          )}
+          <CCard className="p-0">
+            <CCardHeader>Scan Results</CCardHeader>
+            <CTabs activeItemKey={activeTab} onActiveTabChange={setActiveTab}>
+              <CTabList>
+                <CTab itemKey={0}>Dangers</CTab>
+                <CTab itemKey={1}>Warnings</CTab>
+                <CTab itemKey={2}>Good Practices</CTab>
+              </CTabList>
 
-          {/* Warnings Section */}
-          {analysisResults.warning && analysisResults.warning.length > 0 && (
-            <CCard className="p-0 mb-3">
-              <CCardHeader>Warnings</CCardHeader>
-              <CCardBody>
-                {analysisResults.warning.map((item, index) => (
-                  <CAlert color="warning" key={index}>
-                    {typeof item === 'string' ? item : JSON.stringify(item)}
-                  </CAlert>
-                ))}
-              </CCardBody>
-            </CCard>
-          )}
+              <CTabContent>
+                {/* Danger Section */}
+                <CTabPanel itemKey={0}>
+                  {analysisResults.danger.length > 0 ? (
+                    <CAccordion flush>
+                      {analysisResults.danger.map((item, index) => (
+                        <CAccordionItem itemKey={index + 1} key={index}>
+                          <CAccordionHeader>Danger #{index + 1}</CAccordionHeader>
+                          <CAccordionBody>
+                            <strong>{item.check}:</strong> {item.result}
+                          </CAccordionBody>
+                        </CAccordionItem>
+                      ))}
+                    </CAccordion>
+                  ) : (
+                    <p>No dangers detected.</p>
+                  )}
+                </CTabPanel>
 
-          {/* Good Practices Section */}
-          {analysisResults.good && analysisResults.good.length > 0 && (
-            <CCard className="p-0 mb-3">
-              <CCardHeader>Good Practices</CCardHeader>
-              <CCardBody>
-                {analysisResults.good.map((item, index) => (
-                  <CAlert color="success" key={index}>
-                    {typeof item === 'string' ? item : JSON.stringify(item)}
-                  </CAlert>
-                ))}
-              </CCardBody>
-            </CCard>
-          )}
-        </div>
-      )}
+                {/* Warnings Section */}
+                <CTabPanel itemKey={1}>
+                  {analysisResults.warning.length > 0 ? (
+                    <CAccordion flush>
+                      {analysisResults.warning.map((item, index) => (
+                        <CAccordionItem itemKey={index + 1} key={index}>
+                          <CAccordionHeader>Warning #{index + 1}</CAccordionHeader>
+                          <CAccordionBody>
+                            <strong>{item.check}:</strong> {item.result}
+                          </CAccordionBody>
+                        </CAccordionItem>
+                      ))}
+                    </CAccordion>
+                  ) : (
+                    <p>No warnings detected.</p>
+                  )}
+                </CTabPanel>
 
-      {analysisResults && (
-        <CCard className="mt-4" style={{ marginBottom: '30px' }}>
-          <CCardBody>
-            <h5>Educational Materials</h5>
-            <h6>Learn how to mitigate these risks now before it's too late!</h6>
-            <ul>
-              {analysisResults.danger && analysisResults.danger.length > 0 && (
-                <li>
-                  <a
-                    href="/icons/coreui-icons#/base/accordion"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    What is SQL?
-                  </a>
-                </li>
-              )}
-              {analysisResults.warning && analysisResults.warning.length > 0 && (
-                <li>
-                  <a
-                    href="/icons/coreui-icons#/base/breadcrumbs"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    SQL Best Practices
-                  </a>
-                </li>
-              )}
-              {analysisResults.good && analysisResults.good.length > 0 && (
-                <li>
-                  <a
-                    href="/icons/coreui-icons#/base/cards"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Avoid these 7 SQL Mistakes for Better Database Management
-                  </a>
-                </li>
-              )}
-            </ul>
-          </CCardBody>
-        </CCard>
+                {/* Good Practices Section */}
+                <CTabPanel itemKey={2}>
+                  {analysisResults.good.length > 0 ? (
+                    <CAccordion flush>
+                      {analysisResults.good.map((item, index) => (
+                        <CAccordionItem itemKey={index + 1} key={index}>
+                          <CAccordionHeader>Good Practice #{index + 1}</CAccordionHeader>
+                          <CAccordionBody>
+                            <strong>{item.check}:</strong> {item.result}
+                          </CAccordionBody>
+                        </CAccordionItem>
+                      ))}
+                    </CAccordion>
+                  ) : (
+                    <p>No good practices detected.</p>
+                  )}
+                </CTabPanel>
+              </CTabContent>
+            </CTabs>
+          </CCard>
+        </>
       )}
     </>
   );

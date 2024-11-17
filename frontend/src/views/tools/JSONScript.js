@@ -13,27 +13,33 @@ import {
   CTabPanel,
   CTabList,
   CTab,
-  CCallout,
 } from '@coreui/react';
-import Swal from 'sweetalert2';
-import CIcon from '@coreui/icons-react';
-import { cilCheckCircle, cilLoopCircular, cilWarning } from '@coreui/icons';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
+import Swal from 'sweetalert2';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const JSONScript = () => {
   const [file, setFile] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
-  const [analysisResults, setAnalysisResults] = useState(null);
+  const [analysisResults, setAnalysisResults] = useState({
+    danger: [],
+    warning: [],
+    good: []
+  });
 
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0];
     if (selectedFile && selectedFile.type === "application/json") {
       setFile(selectedFile);
     } else {
-      alert("Please select a JSON file.");
+      Swal.fire({
+        icon: 'error',
+        title: 'Invalid File',
+        text: 'Please select a JSON file.',
+      });
       setFile(null);
-      event.target.value = ""; // Clear the file input
     }
   };
 
@@ -46,12 +52,13 @@ const JSONScript = () => {
       });
       return;
     }
-  
+
     const formData = new FormData();
     formData.append('file', file);
-  
+
+    const token = localStorage.getItem('token');
+
     try {
-      // Show loading spinner while the file is being uploaded
       Swal.fire({
         title: 'Uploading File...',
         text: 'Please wait while your file is being uploaded.',
@@ -60,41 +67,37 @@ const JSONScript = () => {
           Swal.showLoading();
         },
       });
-  
-      const response = await fetch("http://localhost:8000/json/upload-json-file", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-        },
+
+      const response = await fetch('http://localhost:8000/json/upload-json-file', {
+        method: 'POST',
         body: formData,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       });
-  
+
       if (!response.ok) {
-        console.error('Failed to upload file, status:', response.status);
-        Swal.fire({
-          icon: 'error',
-          title: 'Upload Failed',
-          text: `File upload failed with status: ${response.status}`,
-        });
-        return;
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'File upload failed');
       }
-  
+
       const data = await response.json();
-      setAnalysisResults(data.analysis);
-  
-      // Close the spinner and show success message
+      setAnalysisResults(data.analysis || { danger: [], warning: [], good: [] });
+
       Swal.fire({
         icon: 'success',
         title: 'Upload Successful',
         text: 'Your file has been uploaded and processed successfully!',
         timer: 2000,
       });
+
+      toast.success('JSON script scanning is complete!');
     } catch (error) {
       console.error('Error uploading file:', error);
       Swal.fire({
         icon: 'error',
-        title: 'Upload Error',
-        text: 'An error occurred while uploading the file. Please try again.',
+        title: 'Error Uploading File',
+        text: error.message || 'Failed to upload file. Please try again.',
       });
     }
   };
@@ -103,70 +106,57 @@ const JSONScript = () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
 
-    // Title
     doc.setFontSize(16);
-    doc.text("JSON Script Analysis Report", pageWidth / 2, 20, { align: "center" });
+    doc.text('JSON Script Analysis Report', pageWidth / 2, 20, { align: 'center' });
 
-    // Function to create table data format for each section
     const createTableData = (title, items) => {
       if (items.length === 0) {
         return [[`${title} - No issues detected.`]];
       }
-      return items.map((item, index) => [`${title} #${index + 1}`, item]);
+      return items.map((item, index) => [
+        `${title} #${index + 1}`,
+        item.check || 'N/A',
+        item.result || 'N/A',
+      ]);
     };
 
-    // Data for Dangers Table
-    const dangersTableData = createTableData("Danger", analysisResults.errors);
-    // Data for Warnings Table
-    const warningsTableData = createTableData("Warning", analysisResults.warnings);
-    // Data for Good Practices Table
-    const goodPracticesTableData = createTableData("Good Practice", analysisResults.good_practices);
+    const startY = 30;
 
-    // Add tables to PDF
-    const startY = 30; // Initial Y position for the first table
-
-    // Add Danger table
+    // Danger Table
     doc.autoTable({
       startY,
-      head: [["Type", "Description"]],
-      body: dangersTableData,
-      theme: "grid",
-      headStyles: { fillColor: [220, 53, 69], textColor: 255 }, // Red for Danger
-      columnStyles: { 1: { cellWidth: "auto" } }, // Auto wrap
+      head: [['Type', 'Check', 'Description']],
+      body: createTableData('Danger', analysisResults.danger),
+      theme: 'grid',
+      headStyles: { fillColor: [220, 53, 69], textColor: 255 },
     });
 
-    // Add Warning table
+    // Warning Table
     doc.autoTable({
       startY: doc.previousAutoTable.finalY + 10,
-      head: [["Type", "Description"]],
-      body: warningsTableData,
-      theme: "grid",
-      headStyles: { fillColor: [255, 193, 7], textColor: 0 }, // Yellow for Warning
-      columnStyles: { 1: { cellWidth: "auto" } },
+      head: [['Type', 'Check', 'Description']],
+      body: createTableData('Warning', analysisResults.warning),
+      theme: 'grid',
+      headStyles: { fillColor: [255, 193, 7], textColor: 0 },
     });
 
-    // Add Good Practices table
+    // Good Practices Table
     doc.autoTable({
       startY: doc.previousAutoTable.finalY + 10,
-      head: [["Type", "Description"]],
-      body: goodPracticesTableData,
-      theme: "grid",
-      headStyles: { fillColor: [40, 167, 69], textColor: 255 }, // Green for Good Practices
-      columnStyles: { 1: { cellWidth: "auto" } },
+      head: [['Type', 'Check', 'Description']],
+      body: createTableData('Good Practice', analysisResults.good),
+      theme: 'grid',
+      headStyles: { fillColor: [40, 167, 69], textColor: 255 },
     });
 
-    // Save the PDF
-    doc.save("JSON_Script_Analysis_Report.pdf");
+    doc.save('JSON_Script_Analysis_Report.pdf');
+    toast.success('PDF export is complete!');
   };
 
   return (
     <>
-      <CCallout color="primary">
-        <h6 className="font-w-500">Notice!</h6>
-        This JSON Script scanning procedure may take a few moments to finish.
-        Additionally, make sure that the file contains a valid JSON Script.
-      </CCallout>
-  
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+
       <CCard className="p-0 mb-50">
         <CCardHeader>Upload JSON Script</CCardHeader>
         <CCardBody>
@@ -176,134 +166,83 @@ const JSONScript = () => {
           </CButton>
         </CCardBody>
       </CCard>
-  
-      <CCard className="p-0" style={{ marginBottom: '30px' }}>
-        {analysisResults && (
-          <CTabs
-            activeItemKey={activeTab}
-            onActiveTabChange={setActiveTab}
-            variant="underline-border"
-            className="mt-10"
-          >
-            <CCardHeader>
-              JSON Script Analysis Result
-              <CButton color="success" className="float-end" onClick={exportToPDF}>
-                Export as PDF
-              </CButton>
-            </CCardHeader>
-            <CTabList variant="underline-border">
-              <CTab className="p-3" aria-controls="danger-tab-pane" itemKey="danger">Danger</CTab>
-              <CTab className="p-3" aria-controls="warning-tab-pane" itemKey="warnings">Warnings</CTab>
-              <CTab className="p-3" aria-controls="good-tab-pane" itemKey="good">Good</CTab>
-            </CTabList>
-            <CTabContent>
-              {/* Danger Tab */}
-              <CTabPanel aria-labelledby="danger-tab-pane" className="p-3" itemKey="danger">
-                {analysisResults.errors.length > 0 ? (
-                  <CAccordion activeItemKey={1}>
-                    {analysisResults.errors.map((error, index) => (
-                      <CAccordionItem itemKey={index + 1} key={index}>
-                        <CAccordionHeader>
-                          <CIcon icon={cilWarning} className="me-2" />
-                          Danger #{index + 1}
-                        </CAccordionHeader>
-                        <CAccordionBody>{error}</CAccordionBody>
-                      </CAccordionItem>
-                    ))}
-                  </CAccordion>
-                ) : (
-                  <p>No dangerous issues detected.</p>
-                )}
-              </CTabPanel>
-  
-              {/* Warnings Tab */}
-              <CTabPanel aria-labelledby="warning-tab-pane" className="p-3" itemKey="warnings">
-                {analysisResults.warnings.length > 0 ? (
-                  <CAccordion activeItemKey={1}>
-                    {analysisResults.warnings.map((warning, index) => (
-                      <CAccordionItem itemKey={index + 1} key={index}>
-                        <CAccordionHeader>
-                          <CIcon icon={cilLoopCircular} className="me-2" />
-                          Warning #{index + 1}
-                        </CAccordionHeader>
-                        <CAccordionBody>{warning}</CAccordionBody>
-                      </CAccordionItem>
-                    ))}
-                  </CAccordion>
-                ) : (
-                  <p>No warnings detected.</p>
-                )}
-              </CTabPanel>
-  
-              {/* Good Practices Tab */}
-              <CTabPanel aria-labelledby="good-tab-pane" className="p-3" itemKey="good">
-                {analysisResults.good_practices.length > 0 ? (
-                  <CAccordion activeItemKey={1}>
-                    {analysisResults.good_practices.map((practice, index) => (
-                      <CAccordionItem itemKey={index + 1} key={index}>
-                        <CAccordionHeader>
-                          <CIcon icon={cilCheckCircle} className="me-2" />
-                          Good Practice #{index + 1}
-                        </CAccordionHeader>
-                        <CAccordionBody>{practice}</CAccordionBody>
-                      </CAccordionItem>
-                    ))}
-                  </CAccordion>
-                ) : (
-                  <p>No good practices found.</p>
-                )}
-              </CTabPanel>
-            </CTabContent>
-          </CTabs>
-        )}
-      </CCard>
-  
-      {/* Educational Materials Section */}
+
       {analysisResults && (
-        <CCard className="mt-4" style={{marginBottom: '30px'}}>
-          <CCardBody>
-            <h5>Educational Materials</h5>
-            <h6>Learn how to mitigate these risks now before it's too late!</h6>
-            <ul>
-              {analysisResults.errors.length > 0 && (
-                <li>
-                  <a
-                    href="http://localhost:3000/icons/coreui-icons#/buttons/buttons"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    About JSON
-                  </a>
-                </li>
-              )}
-              {analysisResults.warnings.length > 0 && (
-                <li>
-                  <a
-                    href="/icons/coreui-icons#/buttons/button-groups"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Good Practices for Working with JSON
-                  </a>
-                </li>
-              )}
-              {analysisResults.good_practices.length > 0 && (
-                <li>
-                  <a
-                    href="/icons/coreui-icons#/buttons/dropdowns"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Common JSON Mistakes and How to Avoid Them
-                  </a>
-                </li>
-              )}
-            </ul>
-          </CCardBody>
-        </CCard>
+        <>
+          <CButton color="success" onClick={exportToPDF} className="mb-3">
+            Export to PDF
+          </CButton>
+
+          <CCard className="p-0">
+            <CCardHeader>Scan Results</CCardHeader>
+            <CTabs activeItemKey={activeTab} onActiveTabChange={setActiveTab}>
+              <CTabList>
+                <CTab itemKey={0}>Dangers</CTab>
+                <CTab itemKey={1}>Warnings</CTab>
+                <CTab itemKey={2}>Good Practices</CTab>
+              </CTabList>
+
+              <CTabContent>
+                {/* Danger Section */}
+                <CTabPanel itemKey={0}>
+                  {analysisResults.danger.length > 0 ? (
+                    <CAccordion flush>
+                      {analysisResults.danger.map((item, index) => (
+                        <CAccordionItem itemKey={index + 1} key={index}>
+                          <CAccordionHeader>Danger #{index + 1}</CAccordionHeader>
+                          <CAccordionBody>
+                            <strong>{item.check}:</strong> {item.result}
+                          </CAccordionBody>
+                        </CAccordionItem>
+                      ))}
+                    </CAccordion>
+                  ) : (
+                    <p>No dangers detected.</p>
+                  )}
+                </CTabPanel>
+
+                {/* Warnings Section */}
+                <CTabPanel itemKey={1}>
+                  {analysisResults.warning.length > 0 ? (
+                    <CAccordion flush>
+                      {analysisResults.warning.map((item, index) => (
+                        <CAccordionItem itemKey={index + 1} key={index}>
+                          <CAccordionHeader>Warning #{index + 1}</CAccordionHeader>
+                          <CAccordionBody>
+                            <strong>{item.check}:</strong> {item.result}
+                          </CAccordionBody>
+                        </CAccordionItem>
+                      ))}
+                    </CAccordion>
+                  ) : (
+                    <p>No warnings detected.</p>
+                  )}
+                </CTabPanel>
+
+                {/* Good Practices Section */}
+                <CTabPanel itemKey={2}>
+                  {analysisResults.good.length > 0 ? (
+                    <CAccordion flush>
+                      {analysisResults.good.map((item, index) => (
+                        <CAccordionItem itemKey={index + 1} key={index}>
+                          <CAccordionHeader>Good Practice #{index + 1}</CAccordionHeader>
+                          <CAccordionBody>
+                            <strong>{item.check}:</strong> {item.result}
+                          </CAccordionBody>
+                        </CAccordionItem>
+                      ))}
+                    </CAccordion>
+                  ) : (
+                    <p>No good practices detected.</p>
+                  )}
+                </CTabPanel>
+              </CTabContent>
+            </CTabs>
+          </CCard>
+        </>
       )}
     </>
   );
-}  
+};
 
 export default JSONScript;

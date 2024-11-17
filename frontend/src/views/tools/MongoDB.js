@@ -43,13 +43,13 @@ const MongoDBScanner = () => {
       });
       return;
     }
-
+  
     setAuditResults({
       errors: [],
       warnings: [],
       good_practices: [],
     });
-
+  
     Swal.fire({
       title: 'Scanning MongoDB...',
       text: 'Please wait while we scan your MongoDB configuration.',
@@ -58,41 +58,36 @@ const MongoDBScanner = () => {
         Swal.showLoading();
       },
     });
-
+  
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch('http://127.0.0.1:8000/scan/mongodb', {
         method: 'POST',
         headers: {
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ mongodb_uri: mongoUri }),
       });
-
+  
       if (!response.ok) {
         throw new Error(`Error: ${response.statusText}`);
       }
-
+  
       const data = await response.json();
-
-      if (data.audit_results && Array.isArray(data.audit_results)) {
+  
+      // Log the API response to debug
+      console.log('API Response:', data);
+  
+      if (data.findings) {
         const categorizedResults = {
-          errors: [],
-          warnings: [],
-          good_practices: [],
+          errors: data.findings.danger || [],
+          warnings: data.findings.warning || [],
+          good_practices: data.findings.good || [],
         };
-
-        data.audit_results.forEach((result) => {
-          if (result.category === 'Danger') {
-            categorizedResults.errors.push(result);
-          } else if (result.category === 'Warning') {
-            categorizedResults.warnings.push(result);
-          } else if (result.category === 'Good') {
-            categorizedResults.good_practices.push(result);
-          }
-        });
-
+  
         setAuditResults(categorizedResults);
-
+  
         Swal.fire({
           icon: 'success',
           title: 'Scan Completed',
@@ -114,17 +109,16 @@ const MongoDBScanner = () => {
         text: 'An error occurred during the scan.',
       });
     }
-  };
+  };  
 
   const exportToPDF = () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
-  
+
     // Title
     doc.setFontSize(16);
     doc.text('MongoDB Analysis Report', pageWidth / 2, 20, { align: 'center' });
-  
-    // Function to create table data format for each section
+
     const createTableData = (title, items) => {
       if (items.length === 0) {
         return [[`${title} - No issues detected.`]];
@@ -135,50 +129,39 @@ const MongoDBScanner = () => {
         item.result || 'N/A',
       ]);
     };
-  
-    // Data for Danger Table
-    const dangersTableData = createTableData('Danger', auditResults.errors);
-    // Data for Warnings Table
-    const warningsTableData = createTableData('Warning', auditResults.warnings);
-    // Data for Good Practices Table
-    const goodPracticesTableData = createTableData('Good Practice', auditResults.good_practices);
-  
-    // Add tables to PDF
-    const startY = 30; // Initial Y position for the first table
-  
-    // Add Danger table
+
+    const startY = 30;
+
+    // Danger Table
     doc.autoTable({
       startY,
       head: [['Type', 'Check', 'Description']],
-      body: dangersTableData,
+      body: createTableData('Danger', auditResults.errors),
       theme: 'grid',
-      headStyles: { fillColor: [220, 53, 69], textColor: 255 }, // Red for Danger
-      columnStyles: { 1: { cellWidth: 'auto' }, 2: { cellWidth: 'auto' } }, // Auto wrap
+      headStyles: { fillColor: [220, 53, 69], textColor: 255 },
     });
-  
-    // Add Warning table
+
+    // Warning Table
     doc.autoTable({
       startY: doc.previousAutoTable.finalY + 10,
       head: [['Type', 'Check', 'Description']],
-      body: warningsTableData,
+      body: createTableData('Warning', auditResults.warnings),
       theme: 'grid',
-      headStyles: { fillColor: [255, 193, 7], textColor: 0 }, // Yellow for Warning
-      columnStyles: { 1: { cellWidth: 'auto' }, 2: { cellWidth: 'auto' } },
+      headStyles: { fillColor: [255, 193, 7], textColor: 0 },
     });
-  
-    // Add Good Practices table
+
+    // Good Practices Table
     doc.autoTable({
       startY: doc.previousAutoTable.finalY + 10,
       head: [['Type', 'Check', 'Description']],
-      body: goodPracticesTableData,
+      body: createTableData('Good Practice', auditResults.good_practices),
       theme: 'grid',
-      headStyles: { fillColor: [40, 167, 69], textColor: 255 }, // Green for Good Practices
-      columnStyles: { 1: { cellWidth: 'auto' }, 2: { cellWidth: 'auto' } },
+      headStyles: { fillColor: [40, 167, 69], textColor: 255 },
     });
-  
-    // Save the PDF
+
+    // Save PDF
     doc.save('MongoDB_Analysis_Report.pdf');
-  };  
+  };
 
   return (
     <>
@@ -225,25 +208,25 @@ const MongoDBScanner = () => {
             </CTab>
           </CTabList>
           <CTabContent>
-            <CTabPanel className="p-3" itemKey={0}>
-              {auditResults.errors.length > 0 ? (
-                <CAccordion activeItemKey={1}>
-                  {auditResults.errors.map((error, index) => (
-                    <CAccordionItem itemKey={index + 1} key={index}>
-                      <CAccordionHeader>
-                        <CIcon icon={cilWarning} className="me-2" />
-                        Danger #{index + 1}
-                      </CAccordionHeader>
-                      <CAccordionBody>
-                        <strong>{error.check}:</strong> {error.result}
-                      </CAccordionBody>
-                    </CAccordionItem>
-                  ))}
-                </CAccordion>
-              ) : (
-                <p>No dangers detected.</p>
-              )}
-            </CTabPanel>
+              <CTabPanel className="p-3" itemKey={0}>
+                {auditResults.errors.length > 0 ? (
+                  <CAccordion activeItemKey={1}>
+                    {auditResults.errors.map((error, index) => (
+                      <CAccordionItem itemKey={index + 1} key={index}>
+                        <CAccordionHeader>
+                          <CIcon icon={cilWarning} className="me-2" />
+                          Danger #{index + 1}
+                        </CAccordionHeader>
+                        <CAccordionBody>
+                          <strong>{error.check}:</strong> {error.result}
+                        </CAccordionBody>
+                      </CAccordionItem>
+                    ))}
+                  </CAccordion>
+                ) : (
+                  <p>No dangers detected.</p>
+                )}
+              </CTabPanel>
 
             <CTabPanel className="p-3" itemKey={1}>
               {auditResults.warnings.length > 0 ? (

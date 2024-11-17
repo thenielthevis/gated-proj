@@ -31,6 +31,7 @@ const Login = () => {
         password,
       })
       localStorage.setItem('token', response.data.access_token)
+      localStorage.setItem('role', response.data.role);
       navigate('/dashboard')  // Redirect to a protected route after successful login
     } catch (error) {
       setError(error.response?.data?.detail || 'Login failed')

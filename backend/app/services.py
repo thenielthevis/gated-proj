@@ -275,7 +275,7 @@ def store_file_upload_record(user_id: Optional[str] = None, service: str = "JSON
         "created_at": datetime.now(),  # Timestamp of the upload
     }
     if user_id:
-        record_data["user_id"] = user_id  # Add user_id if provided
+        record_data["user_uri_id"] = user_id  # Add user_id if provided
 
     # Insert the record into MongoDB's file_upload_records collection
     db.file_upload_records.insert_one(record_data)
