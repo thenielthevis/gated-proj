@@ -314,7 +314,6 @@ async def firebase_hosting_scan(request: FirebaseHostingScanRequest, current_use
         raise HTTPException(status_code=400, detail=f"Error: {str(e)}")
     
 
-#ANALYTICS    
 @analytics_router.get("/analytics", response_model=List[AnalyticsData])
 async def get_analytics():
     try:
@@ -325,74 +324,36 @@ async def get_analytics():
                 }
             },
             {
-                "$project": {
-                    "service": 1,
-                    "timestamp": 1,
-                    "findings_count": {
-                        "$sum": [
-                            {"$size": "$findings.good"},  # Count the number of 'good' findings
-                            {"$size": "$findings.warning"},  # Count the number of 'warning' findings
-                            {"$size": "$findings.danger"}  # Count the number of 'danger' findings
-                        ]
-                    },
-                    "good": {
-                        "$size": "$findings.good"  # Count the number of items in the 'good' array
-                    },
-                    "warning": {
-                        "$size": "$findings.warning"  # Count the number of items in the 'warning' array
-                    },
-                    "danger": {
-                        "$size": "$findings.danger"  # Count the number of items in the 'danger' array
-                    }
-                }
-            },
-            {
                 "$group": {
                     "_id": "$service",  # Group by service name
-                    "findings_count": {"$sum": "$findings_count"},  # Total findings count
+                    "findings_count": {"$sum": 1},  # Count the number of documents (scans)
                     "timestamp": {"$max": "$timestamp"},  # Get the latest timestamp
-                    "good": {"$sum": "$good"},  # Total good findings count
-                    "warning": {"$sum": "$warning"},  # Total warning findings count
-                    "danger": {"$sum": "$danger"},  # Total danger findings count
+                    "good": {"$sum": {"$size": {"$ifNull": ["$findings.good", []]}}},  # Total good findings
+                    "warning": {"$sum": {"$size": {"$ifNull": ["$findings.warning", []]}}},  # Total warning findings
+                    "danger": {"$sum": {"$size": {"$ifNull": ["$findings.danger", []]}}},  # Total danger findings
                 }
             },
             {
                 "$project": {
                     "_id": 0,
                     "service": "$_id",  # Project the service name
-                    "findings_count": 1,
-                    "timestamp": 1,
-                    "good": 1,
-                    "warning": 1,
-                    "danger": 1
+                    "findings_count": 1,  # Number of scans
+                    "timestamp": 1,       # Latest scan timestamp
+                    "good": 1,            # Total good findings
+                    "warning": 1,         # Total warning findings
+                    "danger": 1           # Total danger findings
                 }
             }
         ]
-        
-        # Log pipeline result for debugging
-        print("Aggregation Pipeline:", pipeline)
 
         results = await reports_collection.aggregate(pipeline).to_list(None)
 
         if not results:
             raise HTTPException(status_code=404, detail="No analytics data found")
         
-        # Ensure valid data is returned and log it
-        for result in results:
-            print("Processed Result:", result)
-
-            if result.get('service') is None:
-                result['service'] = 'Unknown'
-                
-            if result.get('timestamp') is None:
-                result['timestamp'] = 'Unknown Timestamp'
-
-            if 'findings' not in result:
-                result['findings'] = []
-
         analytics_data = [AnalyticsData(**result) for result in results]
-        
         return analytics_data
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching analytics data: {str(e)}")
     
@@ -407,3 +368,50 @@ async def get_users_count():
         return users_count
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching users count: {str(e)}")
+
+#USER DASHBOARD
+@analytics_router.get("/user/analytics", response_model=List[AnalyticsData])
+async def get_user_analytics(current_user: dict = Depends(get_current_user)):
+    try:
+        # Get the logged-in user's ID
+        user_id = current_user['id']
+
+        pipeline = [
+            {
+                "$match": {
+                    "user_id": user_id,  # Filter by the logged-in user's ID
+                }
+            },
+            {
+                "$group": {
+                    "_id": "$service",  # Group by service name
+                    "findings_count": {"$sum": 1},  # Count the number of scans
+                    "timestamp": {"$max": "$timestamp"},  # Latest scan timestamp for the service
+                    "good": {"$sum": {"$size": {"$ifNull": ["$findings.good", []]}}},  # Sum good findings
+                    "warning": {"$sum": {"$size": {"$ifNull": ["$findings.warning", []]}}},  # Sum warning findings
+                    "danger": {"$sum": {"$size": {"$ifNull": ["$findings.danger", []]}}},  # Sum danger findings
+                }
+            },
+            {
+                "$project": {
+                    "_id": 0,
+                    "service": "$_id",
+                    "findings_count": 1,  # Number of scans
+                    "timestamp": 1,       # Latest timestamp
+                    "good": 1,            # Total good findings
+                    "warning": 1,         # Total warning findings
+                    "danger": 1           # Total danger findings
+                }
+            }
+        ]
+
+        results = await reports_collection.aggregate(pipeline).to_list(None)
+
+        if not results:
+            raise HTTPException(status_code=404, detail="No analytics data found for the user")
+
+        analytics_data = [AnalyticsData(**result) for result in results]
+
+        return analytics_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching analytics data: {str(e)}")

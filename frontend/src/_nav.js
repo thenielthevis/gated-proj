@@ -29,8 +29,8 @@ const handleLogout = () => {
 }
 
 const _nav = [
-  ...(localStorage.getItem('role') === 'admin'
-    ? [
+  // ...(localStorage.getItem('role') === 'admin'
+  //   ? [
         {
           component: CNavItem,
           name: 'Dashboard',
@@ -41,8 +41,8 @@ const _nav = [
             text: 'NEW',
           },
         },
-      ]
-    : []), // If the user is not an admin, this section will not be included in the navigation menu
+      // ]
+  // If the user is not an admin, this section will not be included in the navigation menu
   {
     component: CNavTitle,
     name: 'Tools',
