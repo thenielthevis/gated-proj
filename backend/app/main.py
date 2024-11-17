@@ -10,7 +10,7 @@ from pymongo import MongoClient
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from uvicorn.config import Config
-from .routes import user_router, mongo_scan_router, sql_scan_router, json_scan_router, firebase_scan_router  # Added json_scan_router
+from .routes import user_router, mongo_scan_router, sql_scan_router, json_scan_router, firebase_scan_router
 from urllib.parse import urlparse
 from cryptography.fernet import Fernet
 from .models import User, UserInDB, FileUploadRecord  # Importing models relatively

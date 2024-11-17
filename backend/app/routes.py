@@ -1,7 +1,6 @@
 import os
-import re
 import socket
-from typing import List, Any
+from typing import List, Any, Dict
 from fastapi import UploadFile, File, APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
 from passlib.context import CryptContext
@@ -9,7 +8,22 @@ from cryptography.fernet import Fernet
 from .models import User, UserInDB, MongoDBRequest, FileUploadRecord, FirestoreScanRequest, FirebaseHostingScanRequest
 from .services import create_user, get_user_by_username, scan_mongo_db_for_risks, validate_sql_script, validate_json_script, store_file_upload_record, scan_firestore_for_risks, scan_firebase_hosting, is_valid_firebase_domain
 from fastapi.responses import JSONResponse
+from dotenv import load_dotenv
+from motor.motor_asyncio import AsyncIOMotorClient
+from fastapi import Depends
+from datetime import datetime, timedelta
+from .auth import get_current_user, create_access_token
 
+env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+load_dotenv(env_path)
+
+MONGO_URI = os.getenv("MONGO_URI")
+DATABASE_NAME = "gated"
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
+
+mongo_client = AsyncIOMotorClient(MONGO_URI)
+db = mongo_client[DATABASE_NAME]
+reports_collection = db["reports"]
 
 # Load environment variables
 secret_key = os.getenv("SECRET_KEY")
@@ -32,6 +46,7 @@ sql_scan_router = APIRouter()
 json_scan_router = APIRouter()
 firebase_scan_router = APIRouter()
 
+# Register route
 @user_router.post("/register")
 async def register(user: User):
     hashed_password = pwd_context.hash(user.password)
@@ -43,7 +58,7 @@ async def register(user: User):
     user_id = create_user(user_in_db)
     return {"message": "User created successfully", "user_id": user_id}
 
-# Login route
+# Login route with token generation
 @user_router.post("/login")
 async def login(login_data: LoginData):
     user_data = get_user_by_username(login_data.username)
@@ -53,8 +68,37 @@ async def login(login_data: LoginData):
     
     if not pwd_context.verify(login_data.password, user_data['password']):
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Generate JWT token
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={
+            "id": str(user_data['_id']),  # Ensure '_id' is included in the token payload
+            "username": user_data['username'],
+            "role": user_data['role']
+        },
+        expires_delta=access_token_expires
+    )
 
-    return {"message": "Login successful", "role": user_data['role']}
+    return {
+        "message": "Login successful",
+        "access_token": access_token,
+        "token_type": "bearer",
+        "role": user_data['role'],
+    }
+
+# Fetch currently logged-in user details
+@user_router.get("/current-user", response_model=Dict[str, Any])
+async def get_current_user_details(current_user: Dict[str, Any] = Depends(get_current_user)):
+    try:
+        return {
+            "user_id": current_user["id"],  # Change from "_id" to "id"
+            "username": current_user["username"],
+            "role": current_user["role"],
+        }
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Unauthorized: {str(e)}")
+
 
 # Route for encrypting the MongoDB URI
 @mongo_scan_router.post("/encrypt-uri/")
@@ -75,27 +119,59 @@ async def decrypt_mongodb_uri(data: MongoDBRequest):
         raise HTTPException(status_code=500, detail=f"Error decrypting URI: {e}")
 
 @mongo_scan_router.post("/mongodb")
-async def scan_mongo_db(request: MongoDBRequest):
+async def scan_mongo_db(
+    request: MongoDBRequest, 
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """
+    Scans the MongoDB URI and saves the findings to the database.
+    """
     try:
-        mongo_uri = request.mongodb_uri  # FastAPI automatically parses the body
+        # Extract MongoDB URI and user information
+        mongo_uri = request.mongodb_uri
+        user_id = current_user["id"]  # Assuming `_id` is the unique identifier for the user
 
         if not mongo_uri:
             raise ValueError("MongoDB URI is required")
 
-        # Run the MongoDB risk scan
-        audit_results = scan_mongo_db_for_risks(mongo_uri)  # Custom function for scan
+        # Perform the scan
+        scan_result = scan_mongo_db_for_risks(mongo_uri)
 
-        # Log the audit results
-        print("Audit results:", audit_results)
+        # Prepare data for saving
+        categorized_results = {
+            "danger": [r for r in scan_result["audit_results"] if r["category"] == "Danger"],
+            "warning": [r for r in scan_result["audit_results"] if r["category"] == "Warning"],
+            "good": [r for r in scan_result["audit_results"] if r["category"] == "Good"],
+        }
 
-        # Return the scan results as a response
-        return audit_results
-    
+        # Create database record
+        record = {
+            "user_id": str(user_id),  # Convert ObjectId to string
+            "uri": mongo_uri,
+            "findings": categorized_results,
+            "timestamp": datetime.now(),
+        }
+
+        # Save the record to the reports collection
+        result = await reports_collection.insert_one(record)
+        
+        # Log the result to ensure it was inserted
+        if result.inserted_id:
+            print(f"Document inserted with ID: {result.inserted_id}")
+        else:
+            print(f"Failed to insert document: {result}")
+
+        # Return the categorized results
+        return {
+            "status": "Scanning completed",
+            "findings": categorized_results,
+            "message": "Scan results saved successfully",
+        }
+
     except Exception as e:
-        # Log the error and send it in the response
         print(f"Error during scan: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error during scanning: {str(e)}")
-
+    
 # Endpoint to receive and validate the SQL file
 @sql_scan_router.post("/upload-sql-file")
 async def upload_sql_file(file: UploadFile = File(...), user_id: str = "example_user_id"):
