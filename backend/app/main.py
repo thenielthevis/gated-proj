@@ -28,7 +28,7 @@ app = FastAPI()
 # CORS configuration to allow frontend requests from http://localhost:3000
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Add exact frontend origin
+    allow_origins=["http://localhost:3000", "https://gated-proj.vercel.app"],  # Add exact frontend origin
     allow_credentials=True,
     allow_methods=["*"],  # Allow all methods
     allow_headers=["*"],  # Allow all headers
