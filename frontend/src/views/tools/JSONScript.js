@@ -23,6 +23,7 @@ import 'react-toastify/dist/ReactToastify.css';
 const JSONScript = () => {
   const [file, setFile] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
+  const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
   const [analysisResults, setAnalysisResults] = useState({
     danger: [],
     warning: [],
@@ -84,6 +85,7 @@ const JSONScript = () => {
 
         const data = await response.json();
         setAnalysisResults(data.analysis || { danger: [], warning: [], good: [] });
+        setIsAnalysisComplete(true);  // Set analysis as complete
 
         Swal.fire({
             icon: 'success',
@@ -101,7 +103,7 @@ const JSONScript = () => {
             text: error.message || 'Failed to upload file. Please try again.',
         });
     }
-};
+  };
 
   const exportToPDF = () => {
     const doc = new jsPDF();
@@ -239,50 +241,45 @@ const JSONScript = () => {
               </CTabContent>
             </CTabs>
           </CCard>
+
           {/* Educational Materials Section */}
-      {analysisResults && (
-        <CCard className="mt-4" style={{marginBottom: '30px'}}>
-          <CCardBody>
-            <h5>Educational Materials</h5>
-            <h6>Learn how to mitigate these risks now before it's too late!</h6>
-            <ul>
-              {(
-                <li>
-                  <a
-                    href="http://localhost:3000/icons/coreui-icons#/buttons/buttons"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    About JSON
-                  </a>
-                </li>
-              )}
-              {(
-                <li>
-                  <a
-                    href="/icons/coreui-icons#/buttons/button-groups"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Good Practices for Working with JSON
-                  </a>
-                </li>
-              )}
-              {(
-                <li>
-                  <a
-                    href="/icons/coreui-icons#/buttons/dropdowns"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Common JSON Mistakes and How to Avoid Them
-                  </a>
-                </li>
-              )}
-            </ul>
-          </CCardBody>
-        </CCard>
-      )}
+          {isAnalysisComplete && (
+            <CCard className="mt-4" style={{marginBottom: '30px'}}>
+              <CCardBody>
+                <h5>Educational Materials</h5>
+                <h6>Learn how to mitigate these risks now before it's too late!</h6>
+                <ul>
+                  <li>
+                    <a
+                      href="http://localhost:3000/icons/coreui-icons#/buttons/buttons"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      About JSON
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="/icons/coreui-icons#/buttons/button-groups"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Good Practices for Working with JSON
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="/icons/coreui-icons#/buttons/dropdowns"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Common JSON Mistakes and How to Avoid Them
+                    </a>
+                  </li>
+                </ul>
+              </CCardBody>
+            </CCard>
+          )}
         </>
       )}
     </>

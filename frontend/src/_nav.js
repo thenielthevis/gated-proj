@@ -220,7 +220,7 @@ const _nav = [
       },
       // {
       //   component: CNavItem,
-      //   name: 'Badges',
+      //   name: 'Edit Profile',
       //   to: '/notifications/badges',
       // },
       // {
