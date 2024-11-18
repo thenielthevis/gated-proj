@@ -64,7 +64,7 @@ const handleScanHosting = async () => {
 
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch('http://localhost:8000/firebase/hosting-scan', {
+    const response = await fetch(`${import.meta.env.VITE_API}/firebase/hosting-scan`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,

@@ -80,7 +80,7 @@ const handleKeyUpload = async () => {
 
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch('http://localhost:8000/firebase/firestore-scan', {
+    const response = await fetch(`${import.meta.env.VITE_API}/firebase/firestore-scan`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
