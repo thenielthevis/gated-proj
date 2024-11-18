@@ -38,6 +38,7 @@ class LoginData(BaseModel):
     username: str
     password: str
 
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Define Routers
@@ -425,3 +426,7 @@ async def get_user_analytics(current_user: dict = Depends(get_current_user)):
         return analytics_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching analytics data: {str(e)}")
+
+
+
+

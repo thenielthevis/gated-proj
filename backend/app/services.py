@@ -783,66 +783,68 @@ def validate_json_script(content: str) -> Dict[str, List[str]]:
     try:
         data = json.loads(content)
     except json.JSONDecodeError:
-        analysis["errors"].append("Invalid JSON format. Only JSON format script is allowed to upload.")
+        analysis["errors"].append("Invalid JSON format. Only JSON format script is allowed to upload. Tip: Ensure the file is in a valid JSON format with correct syntax.")
         return analysis
     
-    # Example validation: Check for specific fields in JSON
+    # Check for specific required fields in JSON
     required_fields = ["username", "password", "email"]
     for field in required_fields:
         if field not in data:
-            analysis["errors"].append(f"Missing required field: {field}")
-    
+            analysis["errors"].append(f"Missing required field: {field}. Tip: Add the '{field}' field to the JSON data to meet the required format.")
+
     # Check if password is hashed
     if "password" in data:
-        if len(data["password"]) < 60:  # Example: Assuming hashed passwords are at least 60 chars (bcrypt standard)
-            analysis["warnings"].append("Password is not hashed. Please use a secure hash.")
+        if len(data["password"]) < 60:  # Assuming hashed passwords are at least 60 characters (bcrypt standard)
+            analysis["warnings"].append("Password is not hashed. Please use a secure hash. Tip: Use a secure hashing algorithm like bcrypt or scrypt to hash the password.")
         else:
-            analysis["good_practices"].append("Password is hashed properly.")
+            analysis["good_practices"].append("Password is hashed properly. Tip: Continue using a secure hashing method for storing passwords.")
 
     # Check for nested user profile data as a good practice
     if "profile" in data.get("user", {}):
-        analysis["good_practices"].append("User profile includes detailed nested data.")
+        analysis["good_practices"].append("User profile includes detailed nested data. Tip: Organizing user data into nested objects like 'profile' is a good practice for better structure.")
 
     # Check for user preferences under profile
     if "preferences" in data.get("user", {}).get("profile", {}):
-        analysis["good_practices"].append("User profile includes preferences, enhancing customization options.")
+        analysis["good_practices"].append("User profile includes preferences, enhancing customization options. Tip: Use the preferences section to store user-specific settings or options.")
 
     # Check if email format is valid
     email = data.get("email", "")
     if email and "@" not in email:
-        analysis["warnings"].append("Invalid email format.")
+        analysis["warnings"].append("Invalid email format. Tip: Ensure the email field contains a valid email address (e.g., user@example.com).")
     else:
-        analysis["good_practices"].append("Email format appears valid.")
+        analysis["good_practices"].append("Email format appears valid. Tip: Using a valid email format is essential for user communication.")
 
     # Validate account status
     if "account" in data:
         if data["account"].get("status") not in ["active", "inactive", "suspended"]:
-            analysis["warnings"].append("Account status should be one of 'active', 'inactive', or 'suspended'.")
+            analysis["warnings"].append("Account status should be one of 'active', 'inactive', or 'suspended'. Tip: Set the account status to a valid value such as 'active', 'inactive', or 'suspended'.")
         else:
-            analysis["good_practices"].append("Account status is valid.")
+            analysis["good_practices"].append("Account status is valid. Tip: Having well-defined account statuses improves user management.")
 
     # Validate transaction entries
     transactions = data.get("transactions", [])
     if transactions:
-        analysis["good_practices"].append("Transactions data is present and includes purchase history.")
+        analysis["good_practices"].append("Transactions data is present and includes purchase history. Tip: Keeping a record of transactions enhances auditability and user transparency.")
         
         for txn in transactions:
+            txn_id = txn.get('id', 'unknown')
             if "status" not in txn:
-                analysis["errors"].append(f"Transaction {txn.get('id', '')} is missing a status field.")
+                analysis["errors"].append(f"Transaction {txn_id} is missing a status field. Tip: Include a 'status' field for each transaction to track its completion state.")
             elif txn["status"] not in ["completed", "pending", "failed"]:
-                analysis["warnings"].append(f"Transaction {txn.get('id', '')} has an invalid status value.")
+                analysis["warnings"].append(f"Transaction {txn_id} has an invalid status value. Tip: Use a valid transaction status such as 'completed', 'pending', or 'failed'.")
+
             if "currency" not in txn or txn["currency"] != "USD":
-                analysis["warnings"].append(f"Transaction {txn.get('id', '')} uses a non-standard currency.")
+                analysis["warnings"].append(f"Transaction {txn_id} uses a non-standard currency. Tip: Set the currency field to 'USD' or specify a currency format to avoid issues.")
 
     # Check privacy settings as a good practice
     if data.get("settings", {}).get("privacy"):
-        analysis["good_practices"].append("Privacy settings are configured.")
+        analysis["good_practices"].append("Privacy settings are configured. Tip: Including privacy settings allows users to control their data preferences.")
 
     # Check if data sharing consent is present under privacy settings
     data_sharing = data.get("settings", {}).get("privacy", {}).get("dataSharing", {})
     if data_sharing.get("consentGiven", False):
-        analysis["good_practices"].append("User has provided consent for data sharing, adhering to privacy policies.")
+        analysis["good_practices"].append("User has provided consent for data sharing, adhering to privacy policies. Tip: Having explicit consent for data sharing helps ensure compliance with regulations.")
     else:
-        analysis["warnings"].append("User has not provided consent for data sharing. Ensure compliance with privacy regulations.")
+        analysis["warnings"].append("User has not provided consent for data sharing. Ensure compliance with privacy regulations. Tip: Request explicit consent from users for data sharing to stay compliant with privacy laws.")
     
     return analysis
