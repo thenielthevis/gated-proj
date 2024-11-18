@@ -1,0 +1,37 @@
+-- Error: SELECT * should specify columns, Missing semicolon, No valid SQL command
+SELECT * FROM users
+
+-- Error: Missing columns in SELECT, Invalid table name, Mismatched parentheses
+SELECT FROM user_data WHERE id = 1;
+
+-- Error: Missing WHERE clause in DELETE statement
+DELETE FROM orders;
+
+-- Error: Mismatched parentheses
+CREATE TABLE products (
+    product_id INT,
+    product_name VARCHAR(100),
+    price DECIMAL(10,2,
+    stock INT
+);
+
+-- Error: Missing data type in CREATE TABLE statement
+CREATE TABLE customers (
+    customer_id,
+    customer_name VARCHAR(50)
+);
+
+-- Error: Missing table name in DROP TABLE statement
+DROP TABLE;
+
+-- Error: Column count does not match value count in INSERT statement
+INSERT INTO orders (order_id, customer_id) VALUES (1);
+
+-- Error: Unbalanced parentheses, Missing semicolon
+UPDATE users SET (username, password) = ('newuser', 'newpass'
+
+-- Error: Invalid SQL command, Should be a valid SQL command like SELECT or UPDATE
+REMOVE users WHERE username = 'testuser';
+
+-- Error: Empty string condition in WHERE clause
+SELECT * FROM products WHERE product_name = '';

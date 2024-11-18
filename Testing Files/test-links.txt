@@ -1,0 +1,5 @@
+MONGODB:
+mongodb+srv://danieldavis:1234567890@clusterdavis.lphgx.mongodb.net/gated
+
+FIREBASE HOSTING:
+svnhsfeed.web.app

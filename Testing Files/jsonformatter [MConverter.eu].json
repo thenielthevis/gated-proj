@@ -1,0 +1,87 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "password": "admin123",
+      "email": "admin@example.com",
+      "role": "administrator",
+      "session_token": "ABC123",
+      "last_login_ip": "192.168.1.1",
+      "last_login_date": "2024-11-15T10:00:00Z"
+    },
+    {
+      "id": 2,
+      "username": "user1",
+      "password": "password",
+      "email": "user1@example.com",
+      "role": "user",
+      "session_token": null,
+      "last_login_ip": "192.168.1.2",
+      "last_login_date": "2024-11-14T12:30:00Z"
+    }
+  ],
+  "products": [
+    {
+      "product_id": 101,
+      "name": null,
+      "description": "",
+      "price": -100,
+      "stock": "unlimited",
+      "images": [
+        "http://example.com/image1.jpg",
+        "http://example.com/../../../../etc/passwd"
+      ]
+    }
+  ],
+  "config": {
+    "debug_mode": true,
+    "api_keys": {
+      "public_key": "12345",
+      "private_key": "67890"
+    },
+    "encryption_key": "supersecretkey",
+    "allowed_origins": [
+      "*"
+    ],
+    "session_timeout_seconds": 86400,
+    "admin_panel_url": "/admin",
+    "logging": {
+      "log_file_path": "/var/log/app.log",
+      "log_level": "debug",
+      "enable_remote_logging": true,
+      "remote_log_server": "http://malicious-logger.com/log"
+    }
+  },
+  "payments": {
+    "default_currency": "USD",
+    "payment_providers": [
+      {
+        "name": "Stripe",
+        "api_key": "sk_test_12345",
+        "sandbox_mode": true
+      }
+    ],
+    "transactions": [
+      {
+        "transaction_id": 201,
+        "user_id": 1,
+        "card_number": "4111111111111111",
+        "cvv": "123",
+        "expiration_date": "12/24",
+        "amount": 100
+      }
+    ]
+  },
+  "system_logs": [
+    {
+      "log_id": 1,
+      "timestamp": "2024-11-15T08:00:00Z",
+      "message": "User admin logged in with IP 192.168.1.1",
+      "sensitive_data": {
+        "user_agent": "Mozilla/5.0",
+        "session_token": "ABC123"
+      }
+    }
+  ]
+}
