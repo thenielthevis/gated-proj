@@ -85,4 +85,4 @@ if __name__ == "__main__":
     port = os.getenv("PORT", 8000)  # Default to 8000 if not set
 
     # Run the app with uvicorn on the dynamic port
-    uvicorn.run(app, host="0.0.0.0", port=int(port))  # Use 0.0.0.0 to allow external connections
+    uvicorn.run(app, host="http://gated-proj.vercel.app", port=int(port))  # Use 0.0.0.0 to allow external connections
