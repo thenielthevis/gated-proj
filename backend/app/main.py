@@ -79,9 +79,10 @@ async def startup_db():
 async def root():
     return {"message": "Hello, World!"}
 
-# Stop Uvicorn server gracefully (if needed)
-def stop_uvicorn():
-    uvicorn.Server(Config(app="main:app")).handle_exit(None)
+# Start Uvicorn server dynamically
+if __name__ == "__main__":
+    # Get the PORT from environment variables (Render.com or local .env)
+    port = os.getenv("PORT", 8000)  # Default to 8000 if not set
 
-# To run the server, use:
-# uvicorn main:app --reload
+    # Run the app with uvicorn on the dynamic port
+    uvicorn.run(app, host="0.0.0.0", port=int(port))  # Use 0.0.0.0 to allow external connections
